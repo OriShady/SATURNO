@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Cursos Admin</title>
+
+  <link rel="stylesheet" href="../css/admin.css">
+
+  <!-- Íconos (opcional) -->
+  <script src="https://kit.fontawesome.com/a2e0e6ad3f.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- ======================
+       SIDEBAR
+  ======================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <h2>🎓 Cursos Admin</h2>
+      <span>SISTEMA SQL</span>
+    </div>
+
+    <nav class="menu">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="categorias.html">Categorías</a>
+      <a href="cursos.html">Alta de Curso</a>
+      <a href="busqueda.html">Búsqueda</a>
+    </nav>
+  </aside>
+
+  <!-- ======================
+       MAIN
+  ======================= -->
+  <main class="main-content">
+
+    <header class="header">
+      <h1>Dashboard</h1>
+      <p>Vista general del sistema de cursos</p>
+    </header>
+
+    <!-- ======================
+         KPIs
+    ======================= -->
+    <section class="grid-kpis">
+
+      <div class="card kpi">
+        <h3 id="totalCursos">0</h3>
+        <p>Cursos</p>
+      </div>
+
+      <div class="card kpi">
+        <h3 id="totalCategorias">0</h3>
+        <p>Categorías</p>
+      </div>
+
+      <div class="card kpi">
+        <h3 id="cursosActivos">0</h3>
+        <p>Activos</p>
+      </div>
+
+    </section>
+
+    <!-- ======================
+         ACCIONES RÁPIDAS
+    ======================= -->
+    <section class="card">
+
+      <h3>⚡ Acciones rápidas</h3>
+
+      <div class="actions">
+        <a href="categorias.html" class="btn btn-primary">+ Crear Categoría</a>
+        <a href="cursos.html" class="btn btn-primary">+ Crear Curso</a>
+        <a href="busqueda.html" class="btn btn-secondary">🔎 Buscar Cursos</a>
+      </div>
+
+    </section>
+
+    <!-- ======================
+         CURSOS REGISTRADOS
+    ======================= -->
+    <section class="card">
+
+      <div class="section-header table-header">
+        <h3>🎬 Cursos registrados</h3>
+        <span class="badge-count" id="totalCursosListado">0 registros</span>
+      </div>
+
+      <div id="coursesDashboard" class="grid-cards">
+        <!-- dinámico -->
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<script src="../js/dashboard.js"></script>
+
+</body>
+</html>

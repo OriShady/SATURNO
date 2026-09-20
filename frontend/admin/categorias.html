@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursos Admin - Categorías</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <h2>🎓 Cursos Admin</h2>
+            <span>SISTEMA SQL</span>
+        </div>
+
+        <nav class="menu">
+            <a href="index.html">Dashboard</a>
+            <a href="categorias.html" class="active">Categorías</a>
+            <a href="cursos.html">Alta de Curso</a>
+            <a href="busqueda.html">Búsqueda</a>
+        </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <header class="header">
+            <h1>Categorías</h1>
+        </header>
+
+        <div class="grid-content">
+
+            <!-- FORM -->
+            <section class="card">
+                <h3>Nueva Categoría</h3>
+
+                <form id="formCategoria">
+                    
+                    <div class="form-group">
+                        <label>NOMBRE *</label>
+                        <input type="text" id="nombre" placeholder="Ej. Desarrollo Web" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>DESCRIPCIÓN</label>
+                        <textarea id="descripcion" placeholder="Breve descripción..."></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">
+                            Crear Categoría
+                        </button>
+
+                        <button type="reset" class="btn btn-secondary">
+                            Limpiar
+                        </button>
+                    </div>
+
+                </form>
+            </section>
+
+            <!-- LISTADO REAL -->
+            <section class="card">
+
+                <div class="table-header">
+                    <h3>Listado de Categorías</h3>
+                    <span class="badge-count" id="totalCategorias">0 registros</span>
+                </div>
+
+                <table class="data-table">
+
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>NOMBRE</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th>ESTATUS</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tabla-categorias">
+                        <!-- 🔥 AQUÍ ENTRA MONGO DINÁMICO -->
+                    </tbody>
+
+                </table>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="../js/categorias.js"></script>
+</body>
+</html>
