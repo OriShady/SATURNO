@@ -32,7 +32,7 @@ async function loadCategoriasSelect() {
         estatus: cat.estatus ?? cat.Estatus ?? 'activo' 
     })) : [];
 
-    // Filtrado robusto y creación segura del DOM
+    
     items
       .filter(cat => cat.estatus.toLowerCase() !== "inactivo")
       .forEach(cat => {

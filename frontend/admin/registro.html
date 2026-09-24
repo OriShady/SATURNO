@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Usuario - SATURNoSQL</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <div class="container">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>🎓 Cursos Admin</h2>
+                <span>SISTEMA SQL</span>
+            </div>
+        
+            <nav class="menu">
+                <a href="index.html" class="active">Dashboard</a>
+                <a href="registro.html">Registrar Usuario</a>
+                <a href="usuarios.html">Gestión de Usuarios</a>
+                <a href="cursos.html">Alta de Curso</a>
+                <a href="categorias.html">Categorías</a>
+                <a href="busqueda.html">Búsqueda</a>
+            </nav>
+        </aside>
+        
+        <h2>Registrar Nuevo Usuario</h2>
+        <form id="formRegistro">
+            <div>
+                <label for="nombres">Nombres:</label>
+                <input type="text" id="nombres" required>
+            </div>
+            <div>
+                <label for="apellidoPaterno">Apellido Paterno:</label>
+                <input type="text" id="apellidoPaterno">
+            </div>
+            <div>
+                <label for="apellidoMaterno">Apellido Materno:</label>
+                <input type="text" id="apellidoMaterno">
+            </div>
+            <div>
+                <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+                <input type="date" id="fechaNacimiento" required>
+            </div>
+            <div>
+                <label for="sexoId">Sexo:</label>
+                <select id="sexoId" required>
+                    <option value="">Seleccione...</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                    <option value="X">Otro</option>
+                </select>
+            </div>
+            <div>
+                <label for="correoEmpresarial">Correo Empresarial:</label>
+                <input type="email" id="correoEmpresarial" required>
+            </div>
+            <div>
+                <label for="telefono">Teléfono:</label>
+                <input type="tel" id="telefono">
+            </div>
+            <div>
+                <label for="usuarioLogin">Nombre de Usuario (Login):</label>
+                <input type="text" id="usuarioLogin" required>
+            </div>
+            <div>
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">Registrar Usuario</button>
+        </form>
+    </div>
+    <script src="../js/registro.js"></script>
+</body>
+</html>
