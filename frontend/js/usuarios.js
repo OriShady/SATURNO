@@ -8,7 +8,12 @@ async function cargarUsuarios() {
         const data = await res.json();
         
         const tbody = document.querySelector("#tablaUsuarios tbody");
+        const totalUsuarios = document.querySelector("#totalUsuarios");
         tbody.innerHTML = "";
+
+        if (totalUsuarios) {
+            totalUsuarios.textContent = `${data.length} ${data.length === 1 ? "registro" : "registros"}`;
+        }
         
         data.forEach(function(usuario) {
             // Creamos la fila principal
@@ -36,7 +41,11 @@ async function cargarUsuarios() {
             
             // Columna Estatus
             const tdEstatus = document.createElement("td");
-            tdEstatus.textContent = usuario.estatus;
+            const status = document.createElement("span");
+            const statusText = usuario.estatus || "Sin estatus";
+            status.textContent = statusText;
+            status.className = `status ${statusText.toLowerCase()}`;
+            tdEstatus.appendChild(status);
             tr.appendChild(tdEstatus);
             
             // Metemos la fila completa a la tabla

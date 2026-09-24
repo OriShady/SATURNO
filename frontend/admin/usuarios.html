@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Usuarios - SATURNoSQL</title>
     <link rel="stylesheet" href="../css/admin.css">
 </head>
@@ -15,33 +16,52 @@
             </div>
         
             <nav class="menu">
-                <a href="index.html" class="active">Dashboard</a>
+                <a href="index.html">Dashboard</a>
                 <a href="registro.html">Registrar Usuario</a>
-                <a href="usuarios.html">Gestión de Usuarios</a>
+                <a href="usuarios.html" class="active">Gestión de Usuarios</a>
                 <a href="cursos.html">Alta de Curso</a>
                 <a href="categorias.html">Categorías</a>
                 <a href="busqueda.html">Búsqueda</a>
             </nav>
         </aside>
 
+        <main class="main-content">
+            <header class="header">
+                <h1>Gestión de usuarios</h1>
+                <p>Consulta y supervisa los usuarios registrados en el sistema</p>
+            </header>
 
-        <h2>Usuarios Registrados</h2>
-        
-        <a href="registro.html" class="btn">Registrar Nuevo Usuario</a>
-        
-        <table id="tablaUsuarios">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre Completo</th>
-                    <th>Correo</th>
-                    <th>Teléfono</th>
-                    <th>Estatus</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+            <section class="card">
+                <div class="table-header">
+                    <div>
+                        <h3>Usuarios registrados</h3>
+                        <p class="section-description">Listado general de cuentas activas e inactivas</p>
+                    </div>
+                    <span class="badge-count" id="totalUsuarios">0 registros</span>
+                </div>
+
+                <div class="table-actions">
+                    <span class="table-hint">Información actualizada desde el sistema</span>
+                    <a href="registro.html" class="btn btn-primary">+ Registrar usuario</a>
+                </div>
+
+                <div class="table-wrap">
+                    <table id="tablaUsuarios" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre completo</th>
+                                <th>Correo empresarial</th>
+                                <th>Teléfono</th>
+                                <th>Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
     </div>
     <script src="../js/usuarios.js"></script>
 </body>

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Usuario - SATURNoSQL</title>
     <link rel="stylesheet" href="../css/admin.css">
 </head>
@@ -15,60 +16,87 @@
             </div>
         
             <nav class="menu">
-                <a href="index.html" class="active">Dashboard</a>
-                <a href="registro.html">Registrar Usuario</a>
+                <a href="index.html">Dashboard</a>
+                <a href="registro.html" class="active">Registrar Usuario</a>
                 <a href="usuarios.html">Gestión de Usuarios</a>
                 <a href="cursos.html">Alta de Curso</a>
                 <a href="categorias.html">Categorías</a>
                 <a href="busqueda.html">Búsqueda</a>
             </nav>
         </aside>
-        
-        <h2>Registrar Nuevo Usuario</h2>
-        <form id="formRegistro">
-            <div>
-                <label for="nombres">Nombres:</label>
-                <input type="text" id="nombres" required>
-            </div>
-            <div>
-                <label for="apellidoPaterno">Apellido Paterno:</label>
-                <input type="text" id="apellidoPaterno">
-            </div>
-            <div>
-                <label for="apellidoMaterno">Apellido Materno:</label>
-                <input type="text" id="apellidoMaterno">
-            </div>
-            <div>
-                <label for="fechaNacimiento">Fecha de Nacimiento:</label>
-                <input type="date" id="fechaNacimiento" required>
-            </div>
-            <div>
-                <label for="sexoId">Sexo:</label>
-                <select id="sexoId" required>
-                    <option value="">Seleccione...</option>
-                    <option value="M">Masculino</option>
-                    <option value="F">Femenino</option>
-                    <option value="X">Otro</option>
-                </select>
-            </div>
-            <div>
-                <label for="correoEmpresarial">Correo Empresarial:</label>
-                <input type="email" id="correoEmpresarial" required>
-            </div>
-            <div>
-                <label for="telefono">Teléfono:</label>
-                <input type="tel" id="telefono">
-            </div>
-            <div>
-                <label for="usuarioLogin">Nombre de Usuario (Login):</label>
-                <input type="text" id="usuarioLogin" required>
-            </div>
-            <div>
-                <label for="password">Contraseña:</label>
-                <input type="password" id="password" required>
-            </div>
-            <button type="submit">Registrar Usuario</button>
-        </form>
+
+        <main class="main-content">
+            <header class="header">
+                <h1>Registrar nuevo usuario</h1>
+                <p>Incorpora un usuario al sistema de cursos</p>
+            </header>
+
+            <section class="card">
+                <form id="formRegistro">
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="nombres">NOMBRES *</label>
+                                <input type="text" id="nombres" placeholder="Ej. María Fernanda" required>
+                            </div>
+
+                            <div class="form-group form-row">
+                                <div class="flex-1">
+                                    <label for="apellidoPaterno">APELLIDO PATERNO</label>
+                                    <input type="text" id="apellidoPaterno">
+                                </div>
+                                <div class="flex-1">
+                                    <label for="apellidoMaterno">APELLIDO MATERNO</label>
+                                    <input type="text" id="apellidoMaterno">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="fechaNacimiento">FECHA DE NACIMIENTO *</label>
+                                <input type="date" id="fechaNacimiento" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sexoId">SEXO *</label>
+                                <select id="sexoId" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                    <option value="X">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="form-group">
+                                <label for="correoEmpresarial">CORREO EMPRESARIAL *</label>
+                                <input type="email" id="correoEmpresarial" placeholder="usuario@empresa.com" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="telefono">TELÉFONO</label>
+                                <input type="tel" id="telefono" placeholder="10 dígitos">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="usuarioLogin">NOMBRE DE USUARIO *</label>
+                                <input type="text" id="usuarioLogin" placeholder="Ej. maria.fuentes" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">CONTRASEÑA *</label>
+                                <input type="password" id="password" placeholder="Crea una contraseña segura" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-footer">
+                        <button type="reset" class="btn btn-secondary">Limpiar</button>
+                        <button type="submit" class="btn btn-primary">Registrar usuario</button>
+                    </div>
+                </form>
+            </section>
+        </main>
     </div>
     <script src="../js/registro.js"></script>
 </body>
