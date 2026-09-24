@@ -79,6 +79,18 @@ public class UsuariosController : ControllerBase
 
         return Ok(new { mensaje = "Usuario registrado exitosamente", idUsuario = nuevoUsuario.Id });
     }
+
+    [HttpPut("{id}/estatus")]
+    public async Task<ActionResult> CambiarEstatus(int id)
+    {
+        var usuario = await _db.Usuarios.FindAsync(id);
+        if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
+
+        usuario.Estatus = usuario.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
+        await _db.SaveChangesAsync();
+
+        return Ok(new { mensaje = "Estatus actualizado correctamente", estatus = usuario.Estatus });
+    }
 }
 
 
