@@ -24,14 +24,22 @@ async function loadCategoriasSelect() {
     const data = await res.json();
 
     const select = document.querySelector("#categoria");
-    select.innerHTML = `<option value="">Selecciona una categoría</option>`;
+    select.innerHTML = `Selecciona una categoría`;
 
-    const items = Array.isArray(data) ? data.map(cat => ({ _id: cat._id ?? cat.id ?? cat.id_categoria, nombre: cat.nombre ?? cat.Nombre ?? '', estatus: cat.estatus ?? cat.Estatus ?? 'activo' })) : [];
+    const items = Array.isArray(data) ? data.map(cat => ({ 
+        _id: cat._id ?? cat.id ?? cat.id_categoria, 
+        nombre: cat.nombre ?? cat.Nombre ?? '', 
+        estatus: cat.estatus ?? cat.Estatus ?? 'activo' 
+    })) : [];
 
+    // Filtrado robusto y creación segura del DOM
     items
-      .filter(cat => cat.estatus !== "inactivo")
+      .filter(cat => cat.estatus.toLowerCase() !== "inactivo")
       .forEach(cat => {
-        select.innerHTML += `<option value="${cat._id}">${cat.nombre}</option>`;
+        const option = document.createElement("option");
+        option.value = cat._id;
+        option.textContent = cat.nombre;
+        select.appendChild(option);
       });
   } catch (error) {
     console.error("Error cargando categorías:", error);

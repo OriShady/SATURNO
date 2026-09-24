@@ -49,7 +49,8 @@ public class CategoriasController : ControllerBase
     {
         var existing = await _db.Categorias.FindAsync(id);
         if (existing == null) return NotFound();
-        _db.Categorias.Remove(existing);
+        //_db.Categorias.Remove(existing);
+        existing.Estatus = "inactivo";
         await _db.SaveChangesAsync();
         return NoContent();
     }
