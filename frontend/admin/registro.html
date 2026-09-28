@@ -90,6 +90,51 @@
                         </div>
                     </div>
 
+                    <h2>Dirección</h2>
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="estadoId">ESTADO *</label>
+                                <select id="estadoId" required>
+                                    <option value="">Cargando estados...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="calle">CALLE *</label>
+                                <input type="text" id="calle" maxlength="150" required>
+                            </div>
+
+                            <div class="form-group form-row">
+                                <div class="flex-1">
+                                    <label for="numeroExterior">NÚMERO EXTERIOR *</label>
+                                    <input type="text" id="numeroExterior" maxlength="20" required>
+                                </div>
+                                <div class="flex-1">
+                                    <label for="numeroInterior">NÚMERO INTERIOR</label>
+                                    <input type="text" id="numeroInterior" maxlength="20">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="form-group">
+                                <label for="codigoPostal">CÓDIGO POSTAL *</label>
+                                <input type="text" id="codigoPostal" maxlength="10" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="colonia">COLONIA *</label>
+                                <input type="text" id="colonia" maxlength="100" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="municipio">MUNICIPIO *</label>
+                                <input type="text" id="municipio" maxlength="100" required>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-footer">
                         <button type="reset" class="btn btn-secondary">Limpiar</button>
                         <button type="submit" class="btn btn-primary">Registrar usuario</button>

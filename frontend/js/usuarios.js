@@ -73,6 +73,20 @@ async function cargarUsuarios() {
             };
 
             tdAcciones.appendChild(btnEstatus);
+
+           //  Asignar Curso
+            const btnAsignar = document.createElement("button");
+            btnAsignar.textContent = "Asignar Curso";
+            btnAsignar.className = "btn btn-primary"; 
+            btnAsignar.style.marginLeft = "10px"; 
+
+            // Manda a la nueva pantalla pasando el ID en la URL
+            btnAsignar.onclick = function() {
+                window.location.href = `asignacion.html?id=${usuario.id}`;
+            };
+
+            tdAcciones.appendChild(btnAsignar);
+
             tr.appendChild(tdAcciones);
             
             // Metrar la fila completa a la tabla

@@ -21,7 +21,22 @@ public class CursosController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var cursos = await _db.Cursos.Include(c => c.Categoria).Include(c => c.Nivel).Include(c => c.Instructor).ToListAsync();
+        var cursos = await _db.Cursos
+            .Select(c => new
+            {
+                c.Id,
+                c.Nombre,
+                c.Descripcion,
+                c.Precio,
+                c.DuracionMinutos,
+                c.FechaPublicacion,
+                c.Estatus,
+                c.FechaCreacion,
+                Categoria = c.Categoria == null ? null : new { c.Categoria.Id, c.Categoria.Nombre },
+                Nivel = c.Nivel == null ? null : new { c.Nivel.Id, c.Nivel.Nombre },
+                Instructor = c.Instructor == null ? null : new { c.Instructor.Id, c.Instructor.Nombre, c.Instructor.Apellido }
+            })
+            .ToListAsync();
         return Ok(cursos);
     }
 

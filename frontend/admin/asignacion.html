@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignar curso - SATURNoSQL</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>🎓 Cursos Admin</h2>
+                <span>SISTEMA SQL</span>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html">Dashboard</a>
+                <a href="registro.html">Registrar Usuario</a>
+                <a href="usuarios.html" class="active">Gestión de Usuarios</a>
+                <a href="cursos.html">Alta de Curso</a>
+                <a href="categorias.html">Categorías</a>
+                <a href="busqueda.html">Búsqueda</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1>Asignar curso</h1>
+                <p>Inscribe a un usuario en un curso activo</p>
+            </header>
+
+            <section class="card">
+                <div class="assignment-toolbar">
+                    <div>
+                        <span class="assignment-eyebrow">USUARIO SELECCIONADO</span>
+                        <h2 id="usuarioNombre">Cargando usuario...</h2>
+                        <p id="usuarioCorreo" class="section-description">Consultando información</p>
+                    </div>
+                    <span class="badge-count" id="usuarioId">ID --</span>
+                </div>
+
+                <form id="formAsignacion">
+                    <div class="form-group">
+                        <label for="cursoId">CURSO DISPONIBLE *</label>
+                        <select id="cursoId" required disabled>
+                            <option value="">Cargando cursos...</option>
+                        </select>
+                    </div>
+
+                    <p class="assignment-course-summary" id="cursoResumen">Elige un curso para continuar.</p>
+                    <p class="assignment-feedback" id="mensajeAsignacion" role="status" aria-live="polite" hidden></p>
+
+                    <div class="form-footer">
+                        <a href="usuarios.html" class="btn btn-secondary">Volver a usuarios</a>
+                        <button type="submit" class="btn btn-primary" id="btnAsignar" disabled>Asignar curso</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+    <script src="../js/asignacion.js"></script>
+</body>
+</html>

@@ -34,6 +34,13 @@ public class UsuariosController : ControllerBase
         return Ok(usuarios);
     }
 
+    [HttpGet("estados")]
+    public async Task<ActionResult> GetEstados()
+    {
+        var estados = await _db.Estados.OrderBy(e => e.NombreEstado).ToListAsync();
+        return Ok(estados);
+    }
+
     [HttpPost("registro")]
     public async Task<ActionResult> Registrar([FromBody] RegistroUsuarioDto dto)
     {
@@ -72,6 +79,18 @@ public class UsuariosController : ControllerBase
             PasswordHash = hash
         };
 
+        // 4.5 Crear y asignar la entidad de dirección
+        nuevoUsuario.Direcciones.Add(new DireccionUsuario
+        {
+            EstadoId = dto.EstadoId,
+            Calle = dto.Calle,
+            NumeroExterior = dto.NumeroExterior,
+            NumeroInterior = dto.NumeroInterior,
+            CodigoPostal = dto.CodigoPostal,
+            Colonia = dto.Colonia,
+            Municipio = dto.Municipio
+        });
+
         // 5. Guardar todo en la base de datos dentro de una transacción implícita
         _db.Usuarios.Add(nuevoUsuario);
         await _db.SaveChangesAsync();
@@ -90,6 +109,43 @@ public class UsuariosController : ControllerBase
 
         return Ok(new { mensaje = "Estatus actualizado correctamente", estatus = usuario.Estatus });
     }
+
+    [HttpGet("cursos-disponibles")]
+    public async Task<ActionResult> GetCursosDisponibles()
+    {
+        // Traer los cursos activos en el menu
+        var cursos = await _db.Cursos
+            .Where(c => c.Estatus == "activo")
+            .Select(c => new { c.Id, c.Nombre })
+            .ToListAsync();
+        
+        return Ok(cursos);
+    }
+
+    [HttpPost("asignar-curso")]
+    public async Task<ActionResult> AsignarCurso([FromBody] AsignarCursoDto dto)
+    {
+        // 1. Validar que no esté ya inscrito en ese mismo curso
+        bool yaInscrito = await _db.CursosUsuarios
+            .AnyAsync(cu => cu.UsuarioId == dto.UsuarioId && cu.CursoId == dto.CursoId);
+            
+        if (yaInscrito) 
+            return BadRequest(new { error = "El usuario ya está inscrito en este curso." });
+
+        // 2. Crear la relación
+        var nuevaInscripcion = new CursoUsuario
+        {
+            UsuarioId = dto.UsuarioId,
+            CursoId = dto.CursoId,
+            FechaInicio = DateTime.UtcNow,
+            Estatus = "EN CURSO" 
+        };
+
+        _db.CursosUsuarios.Add(nuevaInscripcion);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { mensaje = "Curso asignado correctamente al usuario." });
+    }
 }
 
 
@@ -106,6 +162,20 @@ public class RegistroUsuarioDto
     public string? Telefono { get; set; }
     public string UsuarioLogin { get; set; } = null!;
     public string Password { get; set; } = null!;
+
+    public int EstadoId { get; set; }
+    public string Calle { get; set; } = null!;
+    public string NumeroExterior { get; set; } = null!;
+    public string? NumeroInterior { get; set; }
+    public string CodigoPostal { get; set; } = null!;
+    public string Colonia { get; set; } = null!;
+    public string Municipio { get; set; } = null!;
 }
 
+
+public class AsignarCursoDto
+{
+    public int UsuarioId { get; set; }
+    public int CursoId { get; set; }
+}
 

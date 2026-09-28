@@ -474,6 +474,53 @@ button:disabled,
   gap: 16px;
 }
 
+.assignment-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.assignment-toolbar h2 {
+  margin-top: 5px;
+  font-size: 18px;
+}
+
+.assignment-eyebrow {
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.assignment-course-summary {
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.assignment-feedback {
+  margin-top: 16px;
+  padding: 11px 13px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.assignment-feedback.is-success {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+}
+
+.assignment-feedback.is-error {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}
+
 @media (max-width: 600px) {
   .table-header,
   .table-actions {
@@ -483,5 +530,11 @@ button:disabled,
 
   .table-actions .btn {
     text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .assignment-toolbar {
+    align-items: flex-start;
   }
 }
