@@ -13,7 +13,7 @@ public class Usuario
     public char SexoId { get; set; }
     public string CorreoEmpresarial { get; set; } = null!;
     public string? Telefono { get; set; }
-    public DateTime FechaInscripcion { get; set; }
+
     public DateTime FechaRegistro { get; set; }
     public string Estatus { get; set; } = "ACTIVO";
 

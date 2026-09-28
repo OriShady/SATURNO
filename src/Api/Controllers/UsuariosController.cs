@@ -57,7 +57,6 @@ public class UsuariosController : ControllerBase
             SexoId = dto.SexoId,
             CorreoEmpresarial = dto.CorreoEmpresarial,
             Telefono = dto.Telefono,
-            FechaInscripcion = DateTime.UtcNow,
             Estatus = "ACTIVO"
         };
 

@@ -121,7 +121,6 @@ public class NoSqlUContext : DbContext
             entity.Property(e => e.SexoId).HasColumnName("id_sexo").HasColumnType("char(1)");
             entity.Property(e => e.CorreoEmpresarial).HasColumnName("correo_empresarial").HasMaxLength(150).IsRequired();
             entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
-            entity.Property(e => e.FechaInscripcion).HasColumnName("fecha_inscripcion").HasColumnType("date");
             
             // Traducción de TIMESTAMP a SQL Server
             entity.Property(e => e.FechaRegistro).HasColumnName("fecha_registro").HasDefaultValueSql("GETDATE()");
