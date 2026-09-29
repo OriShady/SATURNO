@@ -50,7 +50,16 @@ async function cargarUsuarios() {
 
             // Columna de Acciones
             const tdAcciones = document.createElement("td");
-            tdAcciones.className = "actions-cell";
+            tdAcciones.className = "actions-cell user-row-actions";
+            const btnDetalle = document.createElement("button");
+            btnDetalle.type = "button";
+            btnDetalle.textContent = "Ver detalle";
+            btnDetalle.className = "btn btn-secondary";
+            btnDetalle.onclick = function() {
+                mostrarDetalleUsuario(usuario.id);
+            };
+            tdAcciones.appendChild(btnDetalle);
+
             const btnEstatus = document.createElement("button");
 
             // Ajustar el texto y clase del botón según el estatus
@@ -77,8 +86,7 @@ async function cargarUsuarios() {
            //  Asignar Curso
             const btnAsignar = document.createElement("button");
             btnAsignar.textContent = "Asignar Curso";
-            btnAsignar.className = "btn btn-primary"; 
-            btnAsignar.style.marginLeft = "10px"; 
+            btnAsignar.className = "btn btn-primary";
 
             // Manda a la nueva pantalla pasando el ID en la URL
             btnAsignar.onclick = function() {
@@ -86,6 +94,15 @@ async function cargarUsuarios() {
             };
 
             tdAcciones.appendChild(btnAsignar);
+
+            const btnEliminar = document.createElement("button");
+            btnEliminar.type = "button";
+            btnEliminar.textContent = "Eliminar";
+            btnEliminar.className = "delete-user-action";
+            btnEliminar.onclick = function() {
+                eliminarUsuario(usuario.id, usuario.nombreCompleto);
+            };
+            tdAcciones.appendChild(btnEliminar);
 
             tr.appendChild(tdAcciones);
             
@@ -114,3 +131,91 @@ async function cambiarEstatus(id) {
         console.error("Error de conexión:", error);
     }
 }
+
+async function mostrarDetalleUsuario(id) {
+    const dialog = document.querySelector("#detalleUsuarioDialog");
+    dialog.showModal();
+    document.querySelector("#detalleUsuarioTitulo").textContent = `Usuario #${id}`;
+    document.querySelectorAll(".user-detail-grid dd").forEach(function(elemento) {
+        elemento.textContent = "Cargando...";
+    });
+    document.querySelector("#detalleDirecciones").replaceChildren();
+    document.querySelector("#detalleCursos").replaceChildren();
+
+    try {
+        const respuesta = await fetch(`http://localhost:62391/api/usuarios/${id}`);
+        if (!respuesta.ok) throw new Error("No se pudo consultar la ficha del usuario.");
+        const usuario = await respuesta.json();
+        const nombreCompleto = [usuario.nombres, usuario.apellidoPaterno, usuario.apellidoMaterno]
+            .filter(Boolean)
+            .join(" ");
+
+        document.querySelector("#detalleUsuarioTitulo").textContent = `Usuario #${usuario.id}: ${nombreCompleto}`;
+        document.querySelector("#detalleNombre").textContent = nombreCompleto || "No disponible";
+        document.querySelector("#detalleNacimiento").textContent = formatearFecha(usuario.fechaNacimiento);
+        document.querySelector("#detalleSexo").textContent = usuario.sexo || "No disponible";
+        document.querySelector("#detalleCorreo").textContent = usuario.correoEmpresarial || "No disponible";
+        document.querySelector("#detalleTelefono").textContent = usuario.telefono || "No registrado";
+        document.querySelector("#detalleLogin").textContent = usuario.usuarioLogin || "No disponible";
+        document.querySelector("#detalleEstatus").textContent = usuario.estatus || "No disponible";
+        document.querySelector("#detalleRegistro").textContent = formatearFecha(usuario.fechaRegistro);
+
+        const direcciones = document.querySelector("#detalleDirecciones");
+        if (usuario.direcciones.length === 0) {
+            agregarDetalleVacio(direcciones, "Sin domicilio registrado.");
+        } else {
+            usuario.direcciones.forEach(function(direccion) {
+                const numeroInterior = direccion.numeroInterior ? `, Int. ${direccion.numeroInterior}` : "";
+                const elemento = document.createElement("li");
+                elemento.textContent = `${direccion.calle} ${direccion.numeroExterior}${numeroInterior}, ${direccion.colonia}, ${direccion.municipio}, ${direccion.estado}, C.P. ${direccion.codigoPostal}`;
+                direcciones.appendChild(elemento);
+            });
+        }
+
+        const cursos = document.querySelector("#detalleCursos");
+        if (usuario.cursos.length === 0) {
+            agregarDetalleVacio(cursos, "No tiene cursos inscritos.");
+        } else {
+            usuario.cursos.forEach(function(curso) {
+                const elemento = document.createElement("li");
+                elemento.textContent = `${curso.curso} | ${curso.estatus} | Inicio: ${formatearFecha(curso.fechaInicio)} | Fin: ${formatearFecha(curso.fechaFinalizacion)}`;
+                cursos.appendChild(elemento);
+            });
+        }
+    } catch (error) {
+        console.error("Error al consultar usuario:", error);
+        document.querySelector("#detalleUsuarioTitulo").textContent = "No se pudo cargar la ficha";
+    }
+}
+
+function agregarDetalleVacio(lista, texto) {
+    const elemento = document.createElement("li");
+    elemento.textContent = texto;
+    lista.appendChild(elemento);
+}
+
+function formatearFecha(fecha) {
+    if (!fecha) return "No disponible";
+    const [anio, mes, dia] = fecha.slice(0, 10).split("-");
+    return `${dia}/${mes}/${anio}`;
+}
+
+async function eliminarUsuario(id, nombre) {
+    const confirmado = confirm(`Se eliminarán permanentemente los datos, domicilio e inscripciones de ${nombre}. Los cursos se conservarán. ¿Continuar?`);
+    if (!confirmado) return;
+
+    try {
+        const respuesta = await fetch(`http://localhost:62391/api/usuarios/${id}`, {
+            method: "DELETE"
+        });
+        if (!respuesta.ok) throw new Error("No se pudo eliminar el usuario.");
+        await cargarUsuarios();
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        alert("No se pudo eliminar el usuario. Revisa que la API esté ejecutándose.");
+    }
+}
+
+document.querySelector("#cerrarDetalleUsuario").addEventListener("click", function() {
+    document.querySelector("#detalleUsuarioDialog").close();
+});

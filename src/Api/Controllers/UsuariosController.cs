@@ -34,6 +34,65 @@ public class UsuariosController : ControllerBase
         return Ok(usuarios);
     }
 
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult> GetUsuario(int id)
+    {
+        var usuario = await _db.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Id == id)
+            .Select(u => new
+            {
+                u.Id,
+                u.Nombres,
+                u.ApellidoPaterno,
+                u.ApellidoMaterno,
+                u.FechaNacimiento,
+                Sexo = u.Sexo.Descripcion,
+                u.CorreoEmpresarial,
+                u.Telefono,
+                u.FechaRegistro,
+                u.Estatus,
+                UsuarioLogin = u.Contrasena == null ? null : u.Contrasena.UsuarioLogin,
+                Direcciones = u.Direcciones.Select(d => new
+                {
+                    d.Calle,
+                    d.NumeroExterior,
+                    d.NumeroInterior,
+                    d.CodigoPostal,
+                    d.Colonia,
+                    d.Municipio,
+                    Estado = d.Estado.NombreEstado
+                }),
+                Cursos = u.CursosUsuarios.Select(c => new
+                {
+                    Curso = c.Curso.Nombre,
+                    c.FechaInicio,
+                    c.FechaFinalizacion,
+                    c.Estatus
+                })
+            })
+            .FirstOrDefaultAsync();
+
+        if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
+        return Ok(usuario);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> Eliminar(int id)
+    {
+        var usuario = await _db.Usuarios
+            .Include(u => u.CursosUsuarios)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
+
+        _db.CursosUsuarios.RemoveRange(usuario.CursosUsuarios);
+        _db.Usuarios.Remove(usuario);
+        await _db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     [HttpGet("estados")]
     public async Task<ActionResult> GetEstados()
     {

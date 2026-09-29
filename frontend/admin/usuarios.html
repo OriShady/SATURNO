@@ -64,6 +64,40 @@
             </section>
         </main>
     </div>
+
+    <dialog id="detalleUsuarioDialog" class="user-dialog" aria-labelledby="detalleUsuarioTitulo">
+        <div class="user-dialog-header">
+            <div>
+                <p class="detail-eyebrow">Ficha de usuario</p>
+                <h2 id="detalleUsuarioTitulo">Información completa</h2>
+            </div>
+            <button type="button" class="btn btn-secondary" id="cerrarDetalleUsuario">Cerrar</button>
+        </div>
+
+        <section class="user-detail-section">
+            <h3>Datos personales y cuenta</h3>
+            <dl class="user-detail-grid">
+                <div><dt>Nombre completo</dt><dd id="detalleNombre">-</dd></div>
+                <div><dt>Fecha de nacimiento</dt><dd id="detalleNacimiento">-</dd></div>
+                <div><dt>Sexo</dt><dd id="detalleSexo">-</dd></div>
+                <div><dt>Correo empresarial</dt><dd id="detalleCorreo">-</dd></div>
+                <div><dt>Teléfono</dt><dd id="detalleTelefono">-</dd></div>
+                <div><dt>Usuario de acceso</dt><dd id="detalleLogin">-</dd></div>
+                <div><dt>Estatus</dt><dd id="detalleEstatus">-</dd></div>
+                <div><dt>Fecha de registro</dt><dd id="detalleRegistro">-</dd></div>
+            </dl>
+        </section>
+
+        <section class="user-detail-section">
+            <h3>Domicilios</h3>
+            <ul id="detalleDirecciones" class="user-detail-list"></ul>
+        </section>
+
+        <section class="user-detail-section">
+            <h3>Cursos inscritos</h3>
+            <ul id="detalleCursos" class="user-detail-list"></ul>
+        </section>
+    </dialog>
     <script src="../js/usuarios.js"></script>
 </body>
 </html>
