@@ -51,15 +51,6 @@ async function cargarUsuarios() {
             // Columna de Acciones
             const tdAcciones = document.createElement("td");
             tdAcciones.className = "actions-cell user-row-actions";
-            const btnDetalle = document.createElement("button");
-            btnDetalle.type = "button";
-            btnDetalle.textContent = "Ver detalle";
-            btnDetalle.className = "btn btn-secondary";
-            btnDetalle.onclick = function() {
-                mostrarDetalleUsuario(usuario.id);
-            };
-            tdAcciones.appendChild(btnDetalle);
-
             const btnEstatus = document.createElement("button");
 
             // Ajustar el texto y clase del botón según el estatus
@@ -105,6 +96,19 @@ async function cargarUsuarios() {
             tdAcciones.appendChild(btnEliminar);
 
             tr.appendChild(tdAcciones);
+
+            tr.tabIndex = 0;
+            tr.setAttribute("aria-label", `Ver detalle de ${usuario.nombreCompleto}`);
+            tr.setAttribute("aria-haspopup", "dialog");
+            tr.addEventListener("click", function(event) {
+                if (event.target.closest("button")) return;
+                mostrarDetalleUsuario(usuario.id);
+            });
+            tr.addEventListener("keydown", function(event) {
+                if (event.target !== tr || (event.key !== "Enter" && event.key !== " ")) return;
+                event.preventDefault();
+                mostrarDetalleUsuario(usuario.id);
+            });
             
             // Metrar la fila completa a la tabla
             tbody.appendChild(tr);
