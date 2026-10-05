@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Categorías";
+}
+<header class="header"><h1>Categorías</h1></header>
+<div class="grid-content">
+    <section class="card">
+        <h3>Nueva Categoría</h3>
+        <form id="formCategoria">
+            <div class="form-group">
+                <label for="nombre">NOMBRE *</label>
+                <input type="text" id="nombre" placeholder="Ej. Desarrollo Web" required>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">DESCRIPCIÓN</label>
+                <textarea id="descripcion" placeholder="Breve descripción..."></textarea>
+            </div>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Crear Categoría</button>
+                <button type="reset" class="btn btn-secondary">Limpiar</button>
+            </div>
+        </form>
+    </section>
+    <section class="card">
+        <div class="table-header">
+            <h3>Listado de Categorías</h3>
+            <span class="badge-count" id="totalCategorias">0 registros</span>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>#</th><th>NOMBRE</th><th>DESCRIPCIÓN</th><th>ESTATUS</th><th>ACCIONES</th></tr></thead>
+            <tbody id="tabla-categorias"></tbody>
+        </table>
+    </section>
+</div>
+@section Scripts {
+    <script src="/frontend/js/categorias.js"></script>
+}

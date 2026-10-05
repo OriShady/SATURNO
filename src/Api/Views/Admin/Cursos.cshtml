@@ -1,0 +1,58 @@
+@{
+    ViewData["Title"] = "Alta de Curso";
+}
+<header class="header"><h1>Alta de Curso</h1></header>
+<section class="card">
+    <form id="formCurso">
+        <div class="form-grid">
+            <div>
+                <div class="form-group">
+                    <label for="categoria">CATEGORÍA *</label>
+                    <select id="categoria" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="nombre">NOMBRE *</label>
+                    <input id="nombre" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="descripcion">DESCRIPCIÓN *</label>
+                    <textarea id="descripcion" required></textarea>
+                </div>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label for="nivel">NIVEL *</label>
+                    <select id="nivel" required>
+                        <option value="Básico">Básico</option>
+                        <option value="Intermedio">Intermedio</option>
+                        <option value="Avanzado">Avanzado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="instructor">INSTRUCTOR *</label>
+                    <input id="instructor" type="text" list="listaInstructores" required>
+                    <datalist id="listaInstructores"></datalist>
+                </div>
+                <div class="form-group">
+                    <label for="precio">PRECIO *</label>
+                    <input id="precio" type="number" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="duracion">DURACIÓN (MIN) *</label>
+                    <input id="duracion" type="number" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="fecha">FECHA PUBLICACIÓN</label>
+                    <input id="fecha" type="date" required>
+                </div>
+            </div>
+        </div>
+        <div class="form-footer">
+            <button type="reset" class="btn btn-secondary">Limpiar</button>
+            <button type="submit" class="btn btn-primary">Guardar Curso</button>
+        </div>
+    </form>
+</section>
+@section Scripts {
+    <script src="/frontend/js/cursos.js"></script>
+}

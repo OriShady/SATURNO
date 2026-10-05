@@ -43,9 +43,18 @@ Si deseas, puedo ejecutar la generación de migraciones y ajustar la semilla par
 3. La API usa:
    - HTTP: `http://localhost:62391`
    - HTTPS: `https://localhost:62390`
-4. Si el frontend corre con Live Server en `http://localhost:8080`, no cambies ese puerto por el de la API.
+4. Ejecuta la aplicación MVC desde la raíz del repositorio con `dotnet run --project src/Api`.
 5. Prueba primero `http://localhost:62391/api/health`. Debe responder:
    `{ "db": "ok" }`
-6. Después abre el frontend en `http://localhost:8080/frontend/admin/index.html`.
+6. Abre el dashboard en `http://localhost:62391/`. Las vistas están disponibles en `/admin/categorias`, `/admin/cursos` y `/admin/busqueda`.
 
 La conexión de `appsettings.json` apunta explícitamente a la base `NoSqlU1_migrated`. Si tu instancia de SQL Server no es `localhost`, cambia únicamente `Server=...` por el nombre de servidor que aparece en SSMS.
+
+## Arquitectura MVC
+
+- `src/Api/Controllers`: controladores MVC para las páginas y controladores API para los datos.
+- `src/Api/Views`: vistas Razor y layout compartido de administración.
+- `src/Data/Entities`: modelos de datos persistidos mediante Entity Framework Core.
+- `frontend/css` y `frontend/js`: recursos estáticos consumidos por las vistas.
+
+Las rutas `/api/...` se mantienen para conservar compatibilidad con los clientes existentes.

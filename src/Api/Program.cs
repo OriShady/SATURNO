@@ -6,7 +6,7 @@ using System.IO;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // Enable CORS for local frontend (development)
@@ -34,15 +34,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 app.UseAuthorization();
-// Serve frontend static files from /admin (serves frontend/admin folder)
-var frontendAdminPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "..", "frontend", "admin"));
-if (Directory.Exists(frontendAdminPath))
+// Serve the existing frontend assets while Razor views own the page routes.
+var frontendPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "..", "frontend"));
+if (Directory.Exists(frontendPath))
 {
-    app.UseFileServer(new FileServerOptions
+    app.UseStaticFiles(new StaticFileOptions
     {
-        FileProvider = new PhysicalFileProvider(frontendAdminPath),
-        RequestPath = "/admin",
-        EnableDefaultFiles = true
+        FileProvider = new PhysicalFileProvider(frontendPath),
+        RequestPath = "/frontend"
     });
 }
 app.MapControllers();

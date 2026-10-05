@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewData["Title"] | Cursos Admin</title>
+    <link rel="stylesheet" href="/frontend/css/admin.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>Cursos Admin</h2>
+                <span>SISTEMA SQL</span>
+            </div>
+            <nav class="menu">
+                <a href="/admin" class="@(ViewData["ActivePage"] as string == "dashboard" ? "active" : "")">Dashboard</a>
+                <a href="/admin/categorias" class="@(ViewData["ActivePage"] as string == "categorias" ? "active" : "")">Categorías</a>
+                <a href="/admin/cursos" class="@(ViewData["ActivePage"] as string == "cursos" ? "active" : "")">Alta de Curso</a>
+                <a href="/admin/busqueda" class="@(ViewData["ActivePage"] as string == "busqueda" ? "active" : "")">Búsqueda</a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            @RenderBody()
+        </main>
+    </div>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+<header class="header">
+    <h1>Dashboard</h1>
+    <p>Vista general del sistema de cursos</p>
+</header>
+<section class="grid-kpis">
+    <div class="card kpi"><h3 id="totalCursos">0</h3><p>Cursos</p></div>
+    <div class="card kpi"><h3 id="totalCategorias">0</h3><p>Categorías</p></div>
+    <div class="card kpi"><h3 id="cursosActivos">0</h3><p>Activos</p></div>
+</section>
+<section class="card">
+    <h3>Acciones rápidas</h3>
+    <div class="actions">
+        <a href="/admin/categorias" class="btn btn-primary">+ Crear Categoría</a>
+        <a href="/admin/cursos" class="btn btn-primary">+ Crear Curso</a>
+        <a href="/admin/busqueda" class="btn btn-secondary">Buscar Cursos</a>
+    </div>
+</section>
+<section class="card">
+    <div class="section-header table-header">
+        <h3>Cursos registrados</h3>
+        <span class="badge-count" id="totalCursosListado">0 registros</span>
+    </div>
+    <div id="coursesDashboard" class="grid-cards"></div>
+</section>
+@section Scripts {
+    <script src="/frontend/js/dashboard.js"></script>
+}

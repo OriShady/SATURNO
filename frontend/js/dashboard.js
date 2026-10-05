@@ -1,6 +1,6 @@
 // Backend URL - if served from API (ports 5000/5001 or the .NET app ports) use current origin,
 // otherwise fallback to the local .NET API address used in development (adjust if needed)
-const BACKEND_URL = 'http://localhost:62391';
+const BACKEND_URL = window.location.origin;
 const BASE_API = `${BACKEND_URL}/api`;
 const API_CURSOS = `${BASE_API}/cursos`;
 const API_CAT = `${BASE_API}/categorias`;
