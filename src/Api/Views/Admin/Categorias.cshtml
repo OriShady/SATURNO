@@ -1,0 +1,53 @@
+@model CategoriasViewModel
+@{
+    ViewData["Title"] = "Categorías";
+    ViewData["Active"] = "Categorias";
+}
+<header class="header"><h1>Categorías</h1><p>Organiza y administra las categorías disponibles para tus cursos</p></header>
+<div class="grid-content">
+    <section class="card">
+        <h3>＋ Nueva Categoría</h3>
+        <form asp-action="CrearCategoria" method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <div class="form-group">
+                <label asp-for="NuevaCategoria.Nombre">NOMBRE *</label>
+                <input asp-for="NuevaCategoria.Nombre" required />
+                <span asp-validation-for="NuevaCategoria.Nombre"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NuevaCategoria.Descripcion">DESCRIPCIÓN</label>
+                <textarea asp-for="NuevaCategoria.Descripcion"></textarea>
+            </div>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Crear Categoría</button>
+                <a asp-action="Categorias" class="btn btn-secondary">Limpiar</a>
+            </div>
+        </form>
+    </section>
+    <section class="card">
+        <div class="table-header"><h3>Listado de Categorías</h3><span class="badge-count">@Model.Categorias.Count registros</span></div>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th>#</th><th>NOMBRE</th><th>DESCRIPCIÓN</th><th>ESTATUS</th><th>ACCIONES</th></tr></thead>
+                <tbody>
+                @if (Model.Categorias.Count == 0) { <tr><td colspan="5">No hay categorías registradas.</td></tr> }
+                @for (var i = 0; i < Model.Categorias.Count; i++)
+                {
+                    var categoria = Model.Categorias[i];
+                    <tr>
+                        <td>@(i + 1)</td><td><strong>@categoria.Nombre</strong></td>
+                        <td>@(categoria.Descripcion ?? "-")</td>
+                        <td><span class="status @categoria.Estatus">@categoria.Estatus.ToUpperInvariant()</span></td>
+                        <td>
+                            <form asp-action="CambiarCategoriaEstatus" method="post" class="inline-form">
+                                <input type="hidden" name="id" value="@categoria.Id" />
+                                <button type="submit" class="btn-icon @(categoria.Estatus == "activo" ? "delete" : "edit")" aria-label="@(categoria.Estatus == "activo" ? "Desactivar" : "Reactivar") categoría" title="@(categoria.Estatus == "activo" ? "Desactivar" : "Reactivar")">@(categoria.Estatus == "activo" ? "⏻" : "↻")</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

@@ -120,8 +120,8 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("descripcion");
 
-                    b.Property<long>("DuracionMinutos")
-                        .HasColumnType("bigint")
+                    b.Property<int>("DuracionMinutos")
+                        .HasColumnType("int")
                         .HasColumnName("duracion_minutos");
 
                     b.Property<string>("Estatus")
@@ -177,7 +177,7 @@ namespace Data.Migrations
                             Id = 1,
                             CategoriaId = 1,
                             Descripcion = "Curso introductorio para crear páginas web modernas.",
-                            DuracionMinutos = 300L,
+                            DuracionMinutos = 300,
                             Estatus = "activo",
                             FechaCreacion = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaPublicacion = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -191,7 +191,7 @@ namespace Data.Migrations
                             Id = 2,
                             CategoriaId = 1,
                             Descripcion = "Aprende a crear sistemas web usando PHP y bases de datos MySQL.",
-                            DuracionMinutos = 420L,
+                            DuracionMinutos = 420,
                             Estatus = "activo",
                             FechaCreacion = new DateTime(2026, 5, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaPublicacion = new DateTime(2026, 5, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -205,7 +205,7 @@ namespace Data.Migrations
                             Id = 3,
                             CategoriaId = 2,
                             Descripcion = "Curso básico para aprender consultas, tablas, relaciones y filtros en SQL.",
-                            DuracionMinutos = 240L,
+                            DuracionMinutos = 240,
                             Estatus = "activo",
                             FechaCreacion = new DateTime(2026, 5, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaPublicacion = new DateTime(2026, 5, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -219,7 +219,7 @@ namespace Data.Migrations
                             Id = 4,
                             CategoriaId = 2,
                             Descripcion = "Aprende documentos, colecciones, filtros y modelado NoSQL.",
-                            DuracionMinutos = 360L,
+                            DuracionMinutos = 360,
                             Estatus = "activo",
                             FechaCreacion = new DateTime(2026, 5, 13, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaPublicacion = new DateTime(2026, 5, 13, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -233,7 +233,7 @@ namespace Data.Migrations
                             Id = 5,
                             CategoriaId = 3,
                             Descripcion = "Diseña interfaces atractivas y fáciles de usar.",
-                            DuracionMinutos = 390L,
+                            DuracionMinutos = 390,
                             Estatus = "activo",
                             FechaCreacion = new DateTime(2026, 5, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaPublicacion = new DateTime(2026, 5, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -247,7 +247,7 @@ namespace Data.Migrations
                             Id = 6,
                             CategoriaId = 5,
                             Descripcion = "Introducción a amenazas, contraseñas, redes y buenas prácticas de seguridad.",
-                            DuracionMinutos = 330L,
+                            DuracionMinutos = 330,
                             Estatus = "inactivo",
                             FechaCreacion = new DateTime(2026, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaPublicacion = new DateTime(2026, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -348,9 +348,6 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("numero_interior");
 
-                    b.Property<string>("SexoId")
-                        .HasColumnType("char(1)");
-
                     b.Property<int>("UsuarioId")
                         .HasColumnType("int")
                         .HasColumnName("id_usuario");
@@ -358,8 +355,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EstadoId");
-
-                    b.HasIndex("SexoId");
 
                     b.HasIndex("UsuarioId");
 
@@ -756,9 +751,6 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(150)")
                         .HasColumnName("correo_empresarial");
 
-                    b.Property<int?>("EstadoId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Estatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -766,10 +758,6 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("ACTIVO")
                         .HasColumnName("estatus");
-
-                    b.Property<DateTime>("FechaInscripcion")
-                        .HasColumnType("date")
-                        .HasColumnName("fecha_inscripcion");
 
                     b.Property<DateTime>("FechaNacimiento")
                         .HasColumnType("date")
@@ -801,8 +789,6 @@ namespace Data.Migrations
 
                     b.HasIndex("CorreoEmpresarial")
                         .IsUnique();
-
-                    b.HasIndex("EstadoId");
 
                     b.HasIndex("SexoId");
 
@@ -898,10 +884,6 @@ namespace Data.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_direccion_estado");
 
-                    b.HasOne("NoSqlU.Data.Entities.Sexo", null)
-                        .WithMany("Direcciones")
-                        .HasForeignKey("SexoId");
-
                     b.HasOne("NoSqlU.Data.Entities.Usuario", "Usuario")
                         .WithMany("Direcciones")
                         .HasForeignKey("UsuarioId")
@@ -916,10 +898,6 @@ namespace Data.Migrations
 
             modelBuilder.Entity("NoSqlU.Data.Entities.Usuario", b =>
                 {
-                    b.HasOne("NoSqlU.Data.Entities.Estado", null)
-                        .WithMany("Usuarios")
-                        .HasForeignKey("EstadoId");
-
                     b.HasOne("NoSqlU.Data.Entities.Sexo", "Sexo")
                         .WithMany()
                         .HasForeignKey("SexoId")
@@ -947,11 +925,6 @@ namespace Data.Migrations
                     b.Navigation("Cursos");
                 });
 
-            modelBuilder.Entity("NoSqlU.Data.Entities.Estado", b =>
-                {
-                    b.Navigation("Usuarios");
-                });
-
             modelBuilder.Entity("NoSqlU.Data.Entities.Instructor", b =>
                 {
                     b.Navigation("Cursos");
@@ -960,11 +933,6 @@ namespace Data.Migrations
             modelBuilder.Entity("NoSqlU.Data.Entities.Nivel", b =>
                 {
                     b.Navigation("Cursos");
-                });
-
-            modelBuilder.Entity("NoSqlU.Data.Entities.Sexo", b =>
-                {
-                    b.Navigation("Direcciones");
                 });
 
             modelBuilder.Entity("NoSqlU.Data.Entities.Usuario", b =>

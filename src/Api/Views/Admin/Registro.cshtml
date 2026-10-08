@@ -1,0 +1,42 @@
+@model RegistroUsuarioViewModel
+@{
+    ViewData["Title"] = "Registro de Usuario";
+    ViewData["Active"] = "Registro";
+}
+<header class="header"><h1>Registrar nuevo usuario</h1><p>Incorpora un usuario al sistema de cursos</p></header>
+<section class="card">
+    <form asp-action="Registrar" method="post">
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <div class="form-grid">
+            <div>
+                <div class="form-group"><label asp-for="Nombres">NOMBRES *</label><input asp-for="Nombres" required /><span asp-validation-for="Nombres"></span></div>
+                <div class="form-group form-row">
+                    <div class="flex-1"><label asp-for="ApellidoPaterno">APELLIDO PATERNO</label><input asp-for="ApellidoPaterno" /><span asp-validation-for="ApellidoPaterno"></span></div>
+                    <div class="flex-1"><label asp-for="ApellidoMaterno">APELLIDO MATERNO</label><input asp-for="ApellidoMaterno" /><span asp-validation-for="ApellidoMaterno"></span></div>
+                </div>
+                <div class="form-group"><label asp-for="FechaNacimiento">FECHA DE NACIMIENTO *</label><input asp-for="FechaNacimiento" type="date" required /><span asp-validation-for="FechaNacimiento"></span></div>
+                <div class="form-group"><label asp-for="SexoId">SEXO *</label><select asp-for="SexoId" required><option value="">Seleccione...</option><option value="M">Masculino</option><option value="F">Femenino</option><option value="X">Otro</option></select></div>
+            </div>
+            <div>
+                <div class="form-group"><label asp-for="CorreoEmpresarial">CORREO EMPRESARIAL *</label><input asp-for="CorreoEmpresarial" type="email" required /><span asp-validation-for="CorreoEmpresarial"></span></div>
+                <div class="form-group"><label asp-for="Telefono">TELÉFONO</label><input asp-for="Telefono" type="tel" /></div>
+                <div class="form-group"><label asp-for="UsuarioLogin">NOMBRE DE USUARIO *</label><input asp-for="UsuarioLogin" required /><span asp-validation-for="UsuarioLogin"></span></div>
+                <div class="form-group"><label asp-for="Password">CONTRASEÑA *</label><input asp-for="Password" type="password" required /><span asp-validation-for="Password"></span></div>
+            </div>
+        </div>
+        <h2 class="form-section-title">Dirección</h2>
+        <div class="form-grid">
+            <div>
+                <div class="form-group"><label asp-for="EstadoId">ESTADO *</label><select asp-for="EstadoId" required><option value="">Seleccione...</option>@foreach (var estado in Model.Estados) { <option value="@estado.Id">@estado.NombreEstado</option> }</select><span asp-validation-for="EstadoId"></span></div>
+                <div class="form-group"><label asp-for="Calle">CALLE *</label><input asp-for="Calle" required /><span asp-validation-for="Calle"></span></div>
+                <div class="form-group form-row"><div class="flex-1"><label asp-for="NumeroExterior">NÚMERO EXTERIOR *</label><input asp-for="NumeroExterior" required /><span asp-validation-for="NumeroExterior"></span></div><div class="flex-1"><label asp-for="NumeroInterior">NÚMERO INTERIOR</label><input asp-for="NumeroInterior" /></div></div>
+            </div>
+            <div>
+                <div class="form-group"><label asp-for="CodigoPostal">CÓDIGO POSTAL *</label><input asp-for="CodigoPostal" required /><span asp-validation-for="CodigoPostal"></span></div>
+                <div class="form-group"><label asp-for="Colonia">COLONIA *</label><input asp-for="Colonia" required /><span asp-validation-for="Colonia"></span></div>
+                <div class="form-group"><label asp-for="Municipio">MUNICIPIO *</label><input asp-for="Municipio" required /><span asp-validation-for="Municipio"></span></div>
+            </div>
+        </div>
+        <div class="form-footer"><a asp-action="Registro" class="btn btn-secondary">Limpiar</a><button type="submit" class="btn btn-primary">Registrar usuario</button></div>
+    </form>
+</section>

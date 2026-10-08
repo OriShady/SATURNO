@@ -10,7 +10,7 @@ public class Curso
     public string Nombre { get; set; } = null!;
     public string Descripcion { get; set; } = null!;
     public decimal Precio { get; set; }
-    public uint DuracionMinutos { get; set; }
+    public int DuracionMinutos { get; set; }
     public DateTime FechaPublicacion { get; set; }
     public string Estatus { get; set; } = "activo";
     public DateTime FechaCreacion { get; set; }
@@ -19,3 +19,5 @@ public class Curso
     public Nivel? Nivel { get; set; }
     public Instructor? Instructor { get; set; }
 }
+
+// Cambio para rama Patron 

@@ -1,0 +1,31 @@
+@model Usuario
+@{
+    ViewData["Title"] = "Detalle de Usuario";
+    ViewData["Active"] = "Usuarios";
+}
+<header class="header"><h1>Ficha de usuario</h1><p>Información personal, domicilios e inscripciones</p></header>
+<section class="card">
+    <div class="detail-heading"><span class="detail-avatar" aria-hidden="true">♙</span><div><h2>@Model.Nombres @Model.ApellidoPaterno @Model.ApellidoMaterno</h2><span class="status @Model.Estatus.ToLowerInvariant()">@Model.Estatus</span></div></div>
+    <dl class="user-detail-grid">
+        <div><dt>Fecha de nacimiento</dt><dd>@Model.FechaNacimiento.ToString("d")</dd></div>
+        <div><dt>Sexo</dt><dd>@Model.Sexo.Descripcion</dd></div>
+        <div><dt>Correo empresarial</dt><dd>@Model.CorreoEmpresarial</dd></div>
+        <div><dt>Teléfono</dt><dd>@(Model.Telefono ?? "-")</dd></div>
+        <div><dt>Usuario de acceso</dt><dd>@(Model.Contrasena?.UsuarioLogin ?? "-")</dd></div>
+        <div><dt>Estatus</dt><dd>@Model.Estatus</dd></div>
+        <div><dt>Fecha de registro</dt><dd>@Model.FechaRegistro.ToString("g")</dd></div>
+    </dl>
+</section>
+<section class="card">
+    <h3>⌂ Domicilios</h3>
+    <ul class="user-detail-list">
+    @foreach (var direccion in Model.Direcciones) { <li>@direccion.Calle @direccion.NumeroExterior @direccion.NumeroInterior, @direccion.Colonia, @direccion.Municipio, @direccion.Estado.NombreEstado, @direccion.CodigoPostal</li> }
+    </ul>
+</section>
+<section class="card">
+    <div class="table-header"><h3>🎬 Cursos inscritos</h3><a asp-action="AsignarCurso" asp-route-id="@Model.Id" class="btn btn-primary">＋ Asignar curso</a></div>
+    <ul class="user-detail-list">
+    @foreach (var inscripcion in Model.CursosUsuarios) { <li>@inscripcion.Curso.Nombre — @inscripcion.Estatus (desde @inscripcion.FechaInicio.ToString("d"))</li> }
+    </ul>
+</section>
+<a asp-action="Usuarios" class="btn btn-secondary">Volver a usuarios</a>

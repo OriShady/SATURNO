@@ -1,0 +1,34 @@
+@model BuscarCursosViewModel
+@{
+    ViewData["Title"] = "Búsqueda de Cursos";
+    ViewData["Active"] = "Buscar";
+}
+<header class="header"><h1>Búsqueda de Cursos</h1><p>Encuentra cursos usando filtros de categoría, nivel, instructor y precio</p></header>
+<section class="card">
+    <h3>⌕ Filtros</h3>
+    <form asp-action="Buscar" method="get" class="filter-grid">
+        <div class="form-group"><label asp-for="Q">Curso</label><input asp-for="Q" placeholder="Nombre o descripción" /></div>
+        <div class="form-group"><label asp-for="Categoria">Categoría</label><select asp-for="Categoria"><option value="">Todas</option>@foreach (var item in Model.Categorias) { <option value="@item.Nombre">@item.Nombre</option> }</select></div>
+        <div class="form-group"><label asp-for="Nivel">Nivel</label><select asp-for="Nivel"><option value="">Todos</option>@foreach (var item in Model.Niveles) { <option value="@item.Nombre">@item.Nombre</option> }</select></div>
+        <div class="form-group"><label asp-for="Instructor">Instructor</label><select asp-for="Instructor"><option value="">Todos</option>@foreach (var item in Model.Instructores) { <option value="@item.Nombre">@item.Nombre</option> }</select></div>
+        <div class="form-group"><label asp-for="Estatus">Estatus</label><select asp-for="Estatus"><option value="">Todos</option><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></div>
+        <div class="form-group"><label asp-for="Min">Precio mínimo</label><input asp-for="Min" type="number" step="0.01" min="0" /></div>
+        <div class="form-group"><label asp-for="Max">Precio máximo</label><input asp-for="Max" type="number" step="0.01" min="0" /></div>
+        <div class="button-group"><button class="btn btn-primary" type="submit">Buscar</button><a asp-action="Buscar" class="btn btn-secondary">Limpiar</a></div>
+    </form>
+</section>
+<section class="card">
+    <div class="table-header"><h3>Resultados</h3><span class="badge-count">@Model.Resultados.Count registros</span></div>
+    <div class="grid-cards">
+        @if (Model.Resultados.Count == 0) { <p>No se encontraron cursos.</p> }
+        @foreach (var curso in Model.Resultados)
+        {
+            <article class="card @(curso.Estatus == "inactivo" ? "course-inactive" : "")">
+                <div class="table-header"><h3>@curso.Nombre</h3><span class="status @curso.Estatus">@curso.Estatus.ToUpperInvariant()</span></div>
+                <p>@curso.Descripcion</p><p><strong>Categoría:</strong> @curso.Categoria?.Nombre</p>
+                <p><strong>Nivel:</strong> @curso.Nivel?.Nombre</p><p><strong>Instructor:</strong> @curso.Instructor?.Nombre</p>
+                <p><strong>Precio:</strong> @curso.Precio.ToString("C")</p>
+            </article>
+        }
+    </div>
+</section>

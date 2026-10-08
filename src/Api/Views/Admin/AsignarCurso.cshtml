@@ -1,0 +1,26 @@
+@model AsignarCursoViewModel
+@{
+    ViewData["Title"] = "Asignar curso";
+    ViewData["Active"] = "Usuarios";
+}
+<header class="header"><h1>Asignar curso</h1><p>Inscribe a un usuario en un curso activo</p></header>
+<section class="card">
+    <div class="assignment-toolbar">
+        <div><span class="assignment-eyebrow">USUARIO SELECCIONADO</span><h2>@Model.NombreUsuario</h2><p class="section-description">@Model.CorreoUsuario</p></div>
+        <span class="badge-count">ID @Model.UsuarioId</span>
+    </div>
+    <form asp-action="AsignarCurso" method="post">
+        <input asp-for="UsuarioId" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <div class="form-group">
+            <label asp-for="CursoId">CURSO DISPONIBLE *</label>
+            <select asp-for="CursoId" required><option value="">Selecciona un curso...</option>@foreach (var curso in Model.Cursos) { <option value="@curso.Id">@curso.Nombre</option> }</select>
+            <span asp-validation-for="CursoId"></span>
+        </div>
+        @if (Model.Cursos.Count == 0) { <p>No hay cursos activos disponibles para asignar.</p> }
+        <div class="form-footer">
+            <a asp-action="Usuarios" class="btn btn-secondary">← Volver a usuarios</a>
+            <button type="submit" class="btn btn-primary" disabled="@(Model.Cursos.Count == 0)">＋ Asignar curso</button>
+        </div>
+    </form>
+</section>

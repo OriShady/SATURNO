@@ -43,9 +43,11 @@ Si deseas, puedo ejecutar la generación de migraciones y ajustar la semilla par
 3. La API usa:
    - HTTP: `http://localhost:62391`
    - HTTPS: `https://localhost:62390`
-4. Si el frontend corre con Live Server en `http://localhost:8080`, no cambies ese puerto por el de la API.
-5. Prueba primero `http://localhost:62391/api/health`. Debe responder:
+4. No necesitas iniciar Live Server: la interfaz la sirve directamente la aplicación ASP.NET Core.
+5. Guarda la cadena de conexión localmente (User Secrets; no en el repositorio):
+   `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=NoSqlU1_migrated;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True" --project src/Api/Api.csproj`
+6. Prueba primero `http://localhost:62391/api/health`. Debe responder:
    `{ "db": "ok" }`
-6. Después abre el frontend en `http://localhost:8080/frontend/admin/index.html`.
+7. Abre la interfaz MVC en `http://localhost:62391/` (o el HTTPS local configurado).
 
-La conexión de `appsettings.json` apunta explícitamente a la base `NoSqlU1_migrated`. Si tu instancia de SQL Server no es `localhost`, cambia únicamente `Server=...` por el nombre de servidor que aparece en SSMS.
+Configura el servidor y la base que correspondan a tu entorno en User Secrets. La interfaz se renderiza con MVC/Razor y formularios HTTP; no requiere JavaScript ni Live Server.

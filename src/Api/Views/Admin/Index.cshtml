@@ -1,0 +1,41 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Active"] = "Inicio";
+}
+<header class="header"><h1>Dashboard</h1><p>Vista general del sistema de cursos</p></header>
+<section class="grid-kpis">
+    <div class="card kpi"><span class="kpi-icon" aria-hidden="true">🎬</span><h3>@Model.TotalCursos</h3><p>Cursos</p></div>
+    <div class="card kpi"><span class="kpi-icon" aria-hidden="true">▤</span><h3>@Model.TotalCategorias</h3><p>Categorías</p></div>
+    <div class="card kpi"><span class="kpi-icon" aria-hidden="true">✓</span><h3>@Model.CursosActivos</h3><p>Activos</p></div>
+</section>
+<section class="card">
+    <h3>⚡ Acciones rápidas</h3>
+    <div class="actions">
+        <a asp-action="Categorias" class="btn btn-primary">＋ Crear Categoría</a>
+        <a asp-action="Cursos" class="btn btn-primary">＋ Crear Curso</a>
+        <a asp-action="Buscar" class="btn btn-secondary">⌕ Buscar Cursos</a>
+    </div>
+</section>
+<section class="card">
+    <div class="section-header table-header"><h3>🎬 Cursos registrados</h3><span class="badge-count">@Model.Cursos.Count registros</span></div>
+    <div class="grid-cards">
+        @if (Model.Cursos.Count == 0) { <p>No hay cursos registrados.</p> }
+        @foreach (var curso in Model.Cursos)
+        {
+            <article class="card @(curso.Estatus == "inactivo" ? "course-inactive" : "")">
+                <div class="table-header"><h3>@curso.Nombre</h3><span class="status @curso.Estatus">@curso.Estatus.ToUpperInvariant()</span></div>
+                <p>@(string.IsNullOrWhiteSpace(curso.Descripcion) ? "Sin descripción" : curso.Descripcion)</p>
+                <p><strong>Categoría:</strong> @(curso.Categoria?.Nombre ?? "Sin categoría")</p>
+                <p><strong>Nivel:</strong> @(curso.Nivel?.Nombre ?? "Sin nivel")</p>
+                <p><strong>Instructor:</strong> @(curso.Instructor?.Nombre ?? "Sin instructor")</p>
+                <p><strong>Precio:</strong> @curso.Precio.ToString("C")</p>
+                <p><strong>Duración:</strong> @curso.DuracionMinutos min</p>
+                <form asp-action="CambiarCursoEstatus" method="post">
+                    <input type="hidden" name="id" value="@curso.Id" />
+                    <button class="btn @(curso.Estatus == "inactivo" ? "btn-primary" : "btn-secondary")" type="submit">@(curso.Estatus == "inactivo" ? "Reactivar" : "Desactivar")</button>
+                </form>
+            </article>
+        }
+    </div>
+</section>

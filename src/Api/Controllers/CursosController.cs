@@ -66,7 +66,7 @@ public class CursosController : ControllerBase
             return BadRequest(new { ok = false, error = "Todos los campos son obligatorios" });
 
         if (precio <= 0) return BadRequest(new { ok = false, error = "El precio debe ser mayor a 0" });
-        if (duracion == 0) return BadRequest(new { ok = false, error = "La duración debe ser mayor a 0" });
+        if (duracion <= 0) return BadRequest(new { ok = false, error = "La duración debe ser mayor a 0" });
 
         var cat = await _db.Categorias.FirstOrDefaultAsync(c => c.Id == categoriaId && c.Estatus == "activo");
         if (cat == null) return NotFound(new { ok = false, error = "Categoría no existe o está inactiva" });

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] | Cursos Admin</title>
+    <link rel="stylesheet" href="/css/admin.css?v=2" />
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="brand"><h2>🎓 Cursos Admin</h2><span>SISTEMA SQL</span></div>
+            <nav class="menu">
+                <a asp-controller="Admin" asp-action="Index" class="@(ViewData["Active"] as string == "Inicio" ? "active" : "")"><span aria-hidden="true">▦</span> Dashboard</a>
+                <a asp-controller="Admin" asp-action="Registro" class="@(ViewData["Active"] as string == "Registro" ? "active" : "")"><span aria-hidden="true">＋</span> Registrar Usuario</a>
+                <a asp-controller="Admin" asp-action="Usuarios" class="@(ViewData["Active"] as string == "Usuarios" ? "active" : "")"><span aria-hidden="true">♙</span> Gestión de Usuarios</a>
+                <a asp-controller="Admin" asp-action="Cursos" class="@(ViewData["Active"] as string == "Cursos" ? "active" : "")"><span aria-hidden="true">▣</span> Alta de Curso</a>
+                <a asp-controller="Admin" asp-action="Categorias" class="@(ViewData["Active"] as string == "Categorias" ? "active" : "")"><span aria-hidden="true">▤</span> Categorías</a>
+                <a asp-controller="Admin" asp-action="Buscar" class="@(ViewData["Active"] as string == "Buscar" ? "active" : "")"><span aria-hidden="true">⌕</span> Búsqueda</a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            @if (TempData["Mensaje"] is string mensaje)
+            {
+                <div class="card" role="status">@mensaje</div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+</body>
+</html>
