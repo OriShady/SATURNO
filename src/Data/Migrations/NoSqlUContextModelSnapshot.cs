@@ -267,7 +267,7 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CursoId")
+                    b.Property<int?>("CursoId")
                         .HasColumnType("int")
                         .HasColumnName("id_curso");
 
@@ -283,9 +283,20 @@ namespace Data.Migrations
                         .HasColumnType("date")
                         .HasColumnName("fecha_finalizacion");
 
-                    b.Property<DateTime>("FechaInicio")
+                    b.Property<DateTime?>("FechaInicio")
                         .HasColumnType("date")
                         .HasColumnName("fecha_inicio");
+
+                    b.Property<string>("Institucion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("institucion");
+
+                    b.Property<string>("NombreCurso")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("nombre_curso");
 
                     b.Property<int>("UsuarioId")
                         .HasColumnType("int")
@@ -370,6 +381,14 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Estatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("ACTIVO")
+                        .HasColumnName("estatus");
+
                     b.Property<string>("NombreEstado")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -384,161 +403,193 @@ namespace Data.Migrations
                         new
                         {
                             Id = 1,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Aguascalientes"
                         },
                         new
                         {
                             Id = 2,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Baja California"
                         },
                         new
                         {
                             Id = 3,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Baja California Sur"
                         },
                         new
                         {
                             Id = 4,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Campeche"
                         },
                         new
                         {
                             Id = 5,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Coahuila de Zaragoza"
                         },
                         new
                         {
                             Id = 6,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Colima"
                         },
                         new
                         {
                             Id = 7,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Chiapas"
                         },
                         new
                         {
                             Id = 8,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Chihuahua"
                         },
                         new
                         {
                             Id = 9,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Ciudad de México"
                         },
                         new
                         {
                             Id = 10,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Durango"
                         },
                         new
                         {
                             Id = 11,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Guanajuato"
                         },
                         new
                         {
                             Id = 12,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Guerrero"
                         },
                         new
                         {
                             Id = 13,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Hidalgo"
                         },
                         new
                         {
                             Id = 14,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Jalisco"
                         },
                         new
                         {
                             Id = 15,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Estado de México"
                         },
                         new
                         {
                             Id = 16,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Michoacán de Ocampo"
                         },
                         new
                         {
                             Id = 17,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Morelos"
                         },
                         new
                         {
                             Id = 18,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Nayarit"
                         },
                         new
                         {
                             Id = 19,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Nuevo León"
                         },
                         new
                         {
                             Id = 20,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Oaxaca"
                         },
                         new
                         {
                             Id = 21,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Puebla"
                         },
                         new
                         {
                             Id = 22,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Querétaro"
                         },
                         new
                         {
                             Id = 23,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Quintana Roo"
                         },
                         new
                         {
                             Id = 24,
+                            Estatus = "ACTIVO",
                             NombreEstado = "San Luis Potosí"
                         },
                         new
                         {
                             Id = 25,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Sinaloa"
                         },
                         new
                         {
                             Id = 26,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Sonora"
                         },
                         new
                         {
                             Id = 27,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Tabasco"
                         },
                         new
                         {
                             Id = 28,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Tamaulipas"
                         },
                         new
                         {
                             Id = 29,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Tlaxcala"
                         },
                         new
                         {
                             Id = 30,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Veracruz"
                         },
                         new
                         {
                             Id = 31,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Yucatán"
                         },
                         new
                         {
                             Id = 32,
+                            Estatus = "ACTIVO",
                             NombreEstado = "Zacatecas"
                         });
                 });
@@ -860,7 +911,6 @@ namespace Data.Migrations
                         .WithMany()
                         .HasForeignKey("CursoId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_cursos_usuarios_curso");
 
                     b.HasOne("NoSqlU.Data.Entities.Usuario", "Usuario")

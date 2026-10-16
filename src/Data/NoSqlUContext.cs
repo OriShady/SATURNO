@@ -107,6 +107,7 @@ public class NoSqlUContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id_estado");
             entity.Property(e => e.NombreEstado).HasColumnName("nombre_estado").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Estatus).HasColumnName("estatus").HasMaxLength(20).HasDefaultValue("ACTIVO");
         });
 
         modelBuilder.Entity< Usuario >(entity =>
@@ -154,6 +155,8 @@ public class NoSqlUContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id_usuario_curso");
             entity.Property(e => e.UsuarioId).HasColumnName("id_usuario");
             entity.Property(e => e.CursoId).HasColumnName("id_curso");
+            entity.Property(e => e.NombreCurso).HasColumnName("nombre_curso").HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Institucion).HasColumnName("institucion").HasMaxLength(150);
             entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio").HasColumnType("date");
             entity.Property(e => e.FechaFinalizacion).HasColumnName("fecha_finalizacion").HasColumnType("date");
             entity.Property(e => e.Estatus).HasColumnName("estatus").HasMaxLength(20).HasDefaultValue("EN CURSO");

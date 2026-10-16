@@ -122,3 +122,100 @@ public class AsignarCursoViewModel
     public int CursoId { get; set; }
     public IReadOnlyList<Curso> Cursos { get; set; } = Array.Empty<Curso>();
 }
+
+public class EmpleadosViewModel
+{
+    public string? Q { get; set; }
+    public string? Estatus { get; set; }
+    public int Pagina { get; set; } = 1;
+    public int TotalPaginas { get; set; } = 1;
+    public int TotalEmpleados { get; set; }
+    public IReadOnlyList<Usuario> Empleados { get; set; } = Array.Empty<Usuario>();
+    public EmpleadoFormViewModel NuevoEmpleado { get; set; } = new();
+    public bool MostrarFormulario { get; set; }
+}
+
+public class EmpleadoFormViewModel
+{
+    public int Id { get; set; }
+
+    [Required, StringLength(100)]
+    public string Nombres { get; set; } = string.Empty;
+    [Required, StringLength(50)]
+    public string ApellidoPaterno { get; set; } = string.Empty;
+    [StringLength(50)]
+    public string? ApellidoMaterno { get; set; }
+    [Required, DataType(DataType.Date)]
+    public DateTime? FechaNacimiento { get; set; }
+    [Required, DataType(DataType.Date)]
+    public DateTime? FechaIngreso { get; set; }
+    [Required]
+    public char? SexoId { get; set; }
+    [Required, EmailAddress, StringLength(150)]
+    public string CorreoEmpresarial { get; set; } = string.Empty;
+    [StringLength(20)]
+    public string? Telefono { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Selecciona un estado.")]
+    public int EstadoId { get; set; }
+    [Required, StringLength(150)]
+    public string Calle { get; set; } = string.Empty;
+    [Required, StringLength(20)]
+    public string NumeroExterior { get; set; } = string.Empty;
+    [StringLength(20)]
+    public string? NumeroInterior { get; set; }
+    [Required, StringLength(10)]
+    public string CodigoPostal { get; set; } = string.Empty;
+    [Required, StringLength(100)]
+    public string Colonia { get; set; } = string.Empty;
+    [Required, StringLength(100)]
+    public string Municipio { get; set; } = string.Empty;
+
+    public List<CursoEmpleadoFormViewModel> Cursos { get; set; } = new();
+    public IReadOnlyList<Estado> Estados { get; set; } = Array.Empty<Estado>();
+    public IReadOnlyList<Sexo> Sexos { get; set; } = Array.Empty<Sexo>();
+}
+
+public class CursoEmpleadoFormViewModel
+{
+    [Required, StringLength(200)]
+    public string NombreCurso { get; set; } = string.Empty;
+    [Required, StringLength(150)]
+    public string Institucion { get; set; } = string.Empty;
+    [DataType(DataType.Date)]
+    public DateTime? FechaFinalizacion { get; set; }
+    [Required, StringLength(20)]
+    public string Estatus { get; set; } = "COMPLETADO";
+}
+
+public class CatalogosViewModel
+{
+    public string Tipo { get; set; } = "categorias";
+    public int Pagina { get; set; } = 1;
+    public int TotalPaginas { get; set; } = 1;
+    public int TotalElementos { get; set; }
+    public string? ClaveOriginal { get; set; }
+    public bool EsEdicion { get; set; }
+    public IReadOnlyList<CatalogoFilaViewModel> Elementos { get; set; } = Array.Empty<CatalogoFilaViewModel>();
+    public CatalogoElementoViewModel Elemento { get; set; } = new();
+    public bool MostrarFormulario { get; set; }
+}
+
+public class CatalogoFilaViewModel
+{
+    public string Clave { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+    public string? Descripcion { get; set; }
+    public string Estatus { get; set; } = string.Empty;
+}
+
+public class CatalogoElementoViewModel
+{
+    [StringLength(10)]
+    public string? Clave { get; set; }
+    [Required, StringLength(150)]
+    public string Nombre { get; set; } = string.Empty;
+    [StringLength(255)]
+    public string? Descripcion { get; set; }
+    [RegularExpression("^(activo|inactivo)$", ErrorMessage = "El estado debe ser activo o inactivo.")]
+    public string Estatus { get; set; } = "activo";
+}

@@ -1,0 +1,422 @@
+@model EmpleadosViewModel
+@{
+    ViewData["Title"] = "Empleados";
+    ViewData["Active"] = "Empleados";
+}
+<header class="header employee-page-header">
+    <div class="employee-heading-copy"><h1>Empleados</h1><p>Consulta y administra el personal y los cursos de sus certificados.</p></div>
+    <button type="button" class="btn btn-primary" id="new-employee">＋ Nuevo empleado</button>
+</header>
+
+<section class="card">
+    <form asp-action="Empleados" method="get" id="employee-filters" class="employee-toolbar">
+        <label class="search-control">
+            <span class="sr-only">Buscar empleados</span>
+            <input type="search" name="q" value="@Model.Q" placeholder="Buscar por nombre, correo o número de empleado" autocomplete="off" />
+        </label>
+        <label class="status-filter">
+            <span class="sr-only">Filtrar por estatus</span>
+            <select name="estatus" id="employee-status">
+                <option value="">Todos los estatus</option>
+                <option value="ACTIVO" selected="@(Model.Estatus == "ACTIVO")">Activo</option>
+                <option value="INACTIVO" selected="@(Model.Estatus == "INACTIVO")">Inactivo</option>
+            </select>
+        </label>
+    </form>
+    <div class="table-header employee-list-heading">
+        <div><h2>Directorio de empleados</h2><p class="section-description">@Model.TotalEmpleados empleado(s) encontrado(s)</p></div>
+    </div>
+    <div class="table-wrap">
+        <table class="data-table employee-table">
+            <thead>
+                <tr><th>No. empleado</th><th>Nombre</th><th>Correo</th><th>Estatus</th><th>Fecha de ingreso</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+            @if (Model.Empleados.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-state">No hay empleados que coincidan con la búsqueda.</td></tr>
+            }
+            @foreach (var empleado in Model.Empleados)
+            {
+                <tr>
+                    <td><span class="employee-number">#@empleado.Id</span></td>
+                    <td><strong>@empleado.Nombres @empleado.ApellidoPaterno @empleado.ApellidoMaterno</strong></td>
+                    <td>@empleado.CorreoEmpresarial</td>
+                    <td>
+                        <button type="button" class="status status-indicator @empleado.Estatus.ToLowerInvariant()"
+                                data-toggle-status="@empleado.Id" data-toggle-name="@($"{empleado.Nombres} {empleado.ApellidoPaterno} {empleado.ApellidoMaterno}".Trim())"
+                                data-toggle-current="@empleado.Estatus" aria-label="Cambiar estatus de @empleado.Nombres">
+                            <span class="status-dot" aria-hidden="true"></span>@empleado.Estatus
+                        </button>
+                    </td>
+                    <td>@empleado.FechaRegistro.ToString("d")</td>
+                    <td class="actions-cell">
+                        <div class="employee-actions">
+                            <a asp-action="EditarEmpleado" asp-route-id="@empleado.Id" class="btn btn-secondary">Editar</a>
+                            <button type="button" class="delete-user-action" data-delete-employee="@empleado.Id" data-delete-name="@($"{empleado.Nombres} {empleado.ApellidoPaterno} {empleado.ApellidoMaterno}".Trim())">Eliminar</button>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <p class="employee-search-error" id="employee-search-error" role="alert" hidden></p>
+    <nav class="pagination" aria-label="Paginación de empleados">
+        <a asp-action="Empleados" asp-route-q="@Model.Q" asp-route-estatus="@Model.Estatus" asp-route-pagina="@(Model.Pagina - 1)"
+           class="btn btn-secondary @(Model.Pagina <= 1 ? "disabled" : "")" aria-disabled="@(Model.Pagina <= 1)">← Anterior</a>
+        <span>Página <strong id="employee-current-page">@Model.Pagina</strong> de <strong id="employee-total-pages">@Model.TotalPaginas</strong></span>
+        <a asp-action="Empleados" asp-route-q="@Model.Q" asp-route-estatus="@Model.Estatus" asp-route-pagina="@(Model.Pagina + 1)"
+           class="btn btn-secondary @(Model.Pagina >= Model.TotalPaginas ? "disabled" : "")" aria-disabled="@(Model.Pagina >= Model.TotalPaginas)">Siguiente →</a>
+    </nav>
+</section>
+
+<dialog id="employee-dialog" class="user-dialog employee-dialog" data-open="@(Model.MostrarFormulario ? "true" : "false")">
+    <div class="user-dialog-header">
+        <div><span class="detail-eyebrow">ALTA DE PERSONAL</span><h2>Nuevo empleado</h2><p class="section-description">Completa los datos en tres pasos.</p></div>
+        <button type="button" class="dialog-close" data-close-dialog aria-label="Cerrar registro">×</button>
+    </div>
+    <div class="wizard-progress" aria-label="Progreso del registro">
+        <span class="wizard-step-indicator is-current" data-step-indicator="0"><b>1</b> Datos</span>
+        <span class="wizard-step-indicator" data-step-indicator="1"><b>2</b> Domicilio</span>
+        <span class="wizard-step-indicator" data-step-indicator="2"><b>3</b> Cursos</span>
+    </div>
+    <form asp-action="RegistrarEmpleado" method="post" id="employee-form" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="q" value="@Model.Q" />
+        <input type="hidden" name="estatusActual" value="@Model.Estatus" />
+        <input type="hidden" name="pagina" value="@Model.Pagina" />
+        <div asp-validation-summary="All" class="validation-summary"></div>
+
+        <section class="wizard-panel" data-wizard-panel="0">
+            <h3>Datos personales</h3>
+            <div class="form-grid">
+                <div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.Nombres">NOMBRE(S) *</label><input asp-for="NuevoEmpleado.Nombres" required /><span asp-validation-for="NuevoEmpleado.Nombres"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.ApellidoPaterno">APELLIDO PATERNO *</label><input asp-for="NuevoEmpleado.ApellidoPaterno" required /><span asp-validation-for="NuevoEmpleado.ApellidoPaterno"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.ApellidoMaterno">APELLIDO MATERNO</label><input asp-for="NuevoEmpleado.ApellidoMaterno" /><span asp-validation-for="NuevoEmpleado.ApellidoMaterno"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.FechaNacimiento">FECHA DE NACIMIENTO *</label><input asp-for="NuevoEmpleado.FechaNacimiento" type="date" required /><span asp-validation-for="NuevoEmpleado.FechaNacimiento"></span></div>
+                </div>
+                <div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.FechaIngreso">FECHA DE INGRESO *</label><input asp-for="NuevoEmpleado.FechaIngreso" type="date" required /><span asp-validation-for="NuevoEmpleado.FechaIngreso"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.SexoId">SEXO *</label><select asp-for="NuevoEmpleado.SexoId" required><option value="">Selecciona...</option>@foreach (var sexo in Model.NuevoEmpleado.Sexos) { <option value="@sexo.Id">@sexo.Descripcion</option> }</select><span asp-validation-for="NuevoEmpleado.SexoId"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.CorreoEmpresarial">CORREO *</label><input asp-for="NuevoEmpleado.CorreoEmpresarial" type="email" required /><span asp-validation-for="NuevoEmpleado.CorreoEmpresarial"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.Telefono">TELÉFONO</label><input asp-for="NuevoEmpleado.Telefono" type="tel" /><span asp-validation-for="NuevoEmpleado.Telefono"></span></div>
+                </div>
+            </div>
+            <div class="wizard-actions"><span></span><button type="button" class="btn btn-primary" data-next-step>Siguiente: domicilio →</button></div>
+        </section>
+
+        <section class="wizard-panel" data-wizard-panel="1" hidden>
+            <h3>Domicilio</h3>
+            <div class="form-grid">
+                <div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.EstadoId">ESTADO *</label><select asp-for="NuevoEmpleado.EstadoId" required><option value="">Selecciona...</option>@foreach (var estado in Model.NuevoEmpleado.Estados) { <option value="@estado.Id">@estado.NombreEstado</option> }</select><span asp-validation-for="NuevoEmpleado.EstadoId"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.Calle">CALLE *</label><input asp-for="NuevoEmpleado.Calle" required /><span asp-validation-for="NuevoEmpleado.Calle"></span></div>
+                    <div class="form-group form-row">
+                        <div class="flex-1"><label asp-for="NuevoEmpleado.NumeroExterior">NÚMERO EXTERIOR *</label><input asp-for="NuevoEmpleado.NumeroExterior" required /><span asp-validation-for="NuevoEmpleado.NumeroExterior"></span></div>
+                        <div class="flex-1"><label asp-for="NuevoEmpleado.NumeroInterior">NÚMERO INTERIOR</label><input asp-for="NuevoEmpleado.NumeroInterior" /></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.CodigoPostal">CÓDIGO POSTAL *</label><input asp-for="NuevoEmpleado.CodigoPostal" required /><span asp-validation-for="NuevoEmpleado.CodigoPostal"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.Colonia">COLONIA *</label><input asp-for="NuevoEmpleado.Colonia" required /><span asp-validation-for="NuevoEmpleado.Colonia"></span></div>
+                    <div class="form-group"><label asp-for="NuevoEmpleado.Municipio">MUNICIPIO *</label><input asp-for="NuevoEmpleado.Municipio" required /><span asp-validation-for="NuevoEmpleado.Municipio"></span></div>
+                </div>
+            </div>
+            <div class="wizard-actions"><button type="button" class="btn btn-secondary" data-previous-step>← Anterior</button><button type="button" class="btn btn-primary" data-next-step>Siguiente: cursos →</button></div>
+        </section>
+
+        <section class="wizard-panel" data-wizard-panel="2" hidden>
+            <h3>Cursos del certificado</h3>
+            <p class="section-description">Captura los datos tal como aparecen en el certificado del empleado.</p>
+            <div id="employee-courses">
+            @for (var i = 0; i < Model.NuevoEmpleado.Cursos.Count; i++)
+            {
+                <div class="course-entry">
+                    <div class="course-entry-heading"><strong>Curso @(i + 1)</strong><button type="button" class="text-button remove-course">Quitar</button></div>
+                    <div class="course-entry-grid">
+                        <div class="form-group"><label>CURSO *</label><input name="NuevoEmpleado.Cursos[@i].NombreCurso" value="@Model.NuevoEmpleado.Cursos[i].NombreCurso" required maxlength="200" /></div>
+                        <div class="form-group"><label>INSTITUCIÓN *</label><input name="NuevoEmpleado.Cursos[@i].Institucion" value="@Model.NuevoEmpleado.Cursos[i].Institucion" required maxlength="150" /></div>
+                        <div class="form-group"><label>FECHA DE FINALIZACIÓN</label><input name="NuevoEmpleado.Cursos[@i].FechaFinalizacion" type="date" value="@(Model.NuevoEmpleado.Cursos[i].FechaFinalizacion?.ToString("yyyy-MM-dd"))" /></div>
+                        <div class="form-group"><label>ESTATUS *</label><select name="NuevoEmpleado.Cursos[@i].Estatus" required><option value="COMPLETADO" selected="@(Model.NuevoEmpleado.Cursos[i].Estatus == "COMPLETADO")">Completado</option><option value="EN CURSO" selected="@(Model.NuevoEmpleado.Cursos[i].Estatus == "EN CURSO")">En curso</option></select></div>
+                    </div>
+                </div>
+            }
+            </div>
+            <button type="button" class="btn btn-secondary add-course" id="add-course">＋ Agregar otro curso</button>
+            <template id="course-template">
+                <div class="course-entry">
+                    <div class="course-entry-heading"><strong>Curso</strong><button type="button" class="text-button remove-course">Quitar</button></div>
+                    <div class="course-entry-grid">
+                        <div class="form-group"><label>CURSO *</label><input name="NuevoEmpleado.Cursos[__index__].NombreCurso" required maxlength="200" /></div>
+                        <div class="form-group"><label>INSTITUCIÓN *</label><input name="NuevoEmpleado.Cursos[__index__].Institucion" required maxlength="150" /></div>
+                        <div class="form-group"><label>FECHA DE FINALIZACIÓN</label><input name="NuevoEmpleado.Cursos[__index__].FechaFinalizacion" type="date" /></div>
+                        <div class="form-group"><label>ESTATUS *</label><select name="NuevoEmpleado.Cursos[__index__].Estatus" required><option value="COMPLETADO">Completado</option><option value="EN CURSO">En curso</option></select></div>
+                    </div>
+                </div>
+            </template>
+            <div class="wizard-actions"><button type="button" class="btn btn-secondary" data-previous-step>← Anterior</button><button type="submit" class="btn btn-primary">Guardar empleado</button></div>
+        </section>
+    </form>
+</dialog>
+<dialog id="status-employee-dialog" class="user-dialog confirm-dialog">
+    <div class="user-dialog-header">
+        <div><span class="detail-eyebrow">CAMBIO DE ESTATUS</span><h2 id="status-employee-title">¿Desactivar empleado?</h2></div>
+        <button type="button" class="dialog-close" data-close-dialog aria-label="Cerrar confirmación">×</button>
+    </div>
+    <p class="confirm-copy" id="status-employee-copy">El empleado dejará de aparecer como activo. Sus datos y cursos se conservarán.</p>
+    <form asp-action="CambiarUsuarioEstatus" method="post" id="status-employee-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" id="status-employee-id" />
+        <input type="hidden" name="q" value="@Model.Q" />
+        <input type="hidden" name="filtroEstatus" value="@Model.Estatus" />
+        <input type="hidden" name="pagina" value="@Model.Pagina" />
+        <div class="form-footer">
+            <button type="button" class="btn btn-secondary" data-close-dialog>Cancelar</button>
+            <button type="submit" class="btn btn-warning" id="status-employee-submit">Desactivar empleado</button>
+        </div>
+    </form>
+</dialog>
+<dialog id="delete-employee-dialog" class="user-dialog delete-dialog">
+    <div class="user-dialog-header">
+        <div><span class="detail-eyebrow">ACCIÓN PERMANENTE</span><h2 id="delete-employee-title">¿Eliminar empleado?</h2></div>
+        <button type="button" class="dialog-close" data-close-dialog aria-label="Cerrar confirmación">×</button>
+    </div>
+    <p class="delete-warning">Esta acción eliminará permanentemente al empleado, su domicilio y los cursos registrados. No se puede deshacer.</p>
+    <form asp-action="EliminarEmpleado" method="post" id="delete-employee-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" id="delete-employee-id" />
+        <input type="hidden" name="q" value="@Model.Q" />
+        <input type="hidden" name="filtroEstatus" value="@Model.Estatus" />
+        <input type="hidden" name="pagina" value="@Model.Pagina" />
+        <div class="form-footer">
+            <button type="button" class="btn btn-secondary" data-close-dialog>Cancelar</button>
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+(() => {
+    const employeeDialog = document.getElementById("employee-dialog");
+    const deleteDialog = document.getElementById("delete-employee-dialog");
+    const statusDialog = document.getElementById("status-employee-dialog");
+    const filters = document.getElementById("employee-filters");
+    const search = filters.querySelector('input[name="q"]');
+    const status = document.getElementById("employee-status");
+    const tbody = document.querySelector(".employee-table tbody");
+    const count = document.querySelector(".employee-list-heading .section-description");
+    const pager = document.querySelector(".pagination");
+    const searchError = document.getElementById("employee-search-error");
+    let searchTimer;
+    let requestNumber = 0;
+
+    document.getElementById("new-employee").addEventListener("click", () => employeeDialog.showModal());
+    document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => button.closest("dialog").close()));
+    if (employeeDialog.dataset.open === "true") employeeDialog.showModal();
+
+    async function loadEmployees(page = 1) {
+        const currentRequest = ++requestNumber;
+        const query = new URLSearchParams({ q: search.value, estatus: status.value, pagina: page });
+        try {
+            const response = await fetch(`/Admin/BuscarEmpleados?${query}`, { headers: { "Accept": "application/json" } });
+            if (!response.ok) throw new Error(`La búsqueda respondió con código ${response.status}.`);
+            const result = await response.json();
+            if (currentRequest !== requestNumber) return;
+            searchError.hidden = true;
+            tbody.replaceChildren();
+            if (result.employees.length === 0) {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.colSpan = 6;
+                cell.className = "empty-state";
+                cell.textContent = "No hay empleados que coincidan con la búsqueda.";
+                row.append(cell);
+                tbody.append(row);
+            } else {
+                result.employees.forEach(employee => tbody.append(createEmployeeRow(employee)));
+            }
+            count.textContent = `${result.totalEmpleados} empleado(s) encontrado(s)`;
+            document.getElementById("employee-current-page").textContent = result.pagina;
+            document.getElementById("employee-total-pages").textContent = result.totalPaginas;
+            updatePager(result.pagina, result.totalPaginas);
+        } catch (error) {
+            if (currentRequest !== requestNumber) return;
+            searchError.textContent = `No fue posible actualizar la lista. ${error.message}`;
+            searchError.hidden = false;
+        }
+    }
+
+    function createEmployeeRow(employee) {
+        const row = document.createElement("tr");
+        const idCell = document.createElement("td");
+        const number = document.createElement("span");
+        number.className = "employee-number";
+        number.textContent = `#${employee.id}`;
+        idCell.append(number);
+        const nameCell = document.createElement("td");
+        const name = document.createElement("strong");
+        name.textContent = employee.name;
+        nameCell.append(name);
+        const emailCell = document.createElement("td");
+        emailCell.textContent = employee.email;
+        const statusCell = document.createElement("td");
+        const badge = document.createElement("button");
+        badge.type = "button";
+        badge.className = `status status-indicator ${employee.status.toLowerCase()}`;
+        badge.dataset.toggleStatus = employee.id;
+        badge.dataset.toggleName = employee.name;
+        badge.dataset.toggleCurrent = employee.status;
+        badge.setAttribute("aria-label", `Cambiar estatus de ${employee.name}`);
+        const statusDot = document.createElement("span");
+        statusDot.className = "status-dot";
+        statusDot.setAttribute("aria-hidden", "true");
+        badge.append(statusDot, document.createTextNode(employee.status));
+        statusCell.append(badge);
+        const dateCell = document.createElement("td");
+        dateCell.textContent = employee.joinDate;
+        const actionsCell = document.createElement("td");
+        actionsCell.className = "actions-cell";
+        const actions = document.createElement("div");
+        actions.className = "employee-actions";
+        const edit = document.createElement("a");
+        edit.className = "btn btn-secondary";
+        edit.href = `/Admin/EditarEmpleado/${employee.id}`;
+        edit.textContent = "Editar";
+        actions.append(edit);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "delete-user-action";
+        remove.dataset.deleteEmployee = employee.id;
+        remove.dataset.deleteName = employee.name;
+        remove.textContent = "Eliminar";
+        actions.append(remove);
+        actionsCell.append(actions);
+        row.append(idCell, nameCell, emailCell, statusCell, dateCell, actionsCell);
+        return row;
+    }
+
+    function updatePager(page, pages) {
+        const previous = pager.querySelector("a:first-child");
+        const next = pager.querySelector("a:last-child");
+        const query = new URLSearchParams({ q: search.value, estatus: status.value });
+        previous.href = `/Admin/Empleados?${query}&pagina=${Math.max(1, page - 1)}`;
+        next.href = `/Admin/Empleados?${query}&pagina=${Math.min(pages, page + 1)}`;
+        previous.classList.toggle("disabled", page <= 1);
+        previous.setAttribute("aria-disabled", String(page <= 1));
+        next.classList.toggle("disabled", page >= pages);
+        next.setAttribute("aria-disabled", String(page >= pages));
+    }
+
+    search.addEventListener("input", () => {
+        window.clearTimeout(searchTimer);
+        searchTimer = window.setTimeout(() => loadEmployees(1), 300);
+    });
+    status.addEventListener("change", () => loadEmployees(1));
+    pager.addEventListener("click", event => {
+        const link = event.target.closest("a");
+        if (!link || link.classList.contains("disabled")) return;
+        event.preventDefault();
+        const page = new URL(link.href).searchParams.get("pagina");
+        loadEmployees(Number(page));
+    });
+
+    document.addEventListener("click", event => {
+        const statusButton = event.target.closest("[data-toggle-status]");
+        if (statusButton) {
+            const activo = statusButton.dataset.toggleCurrent === "ACTIVO";
+            document.getElementById("status-employee-id").value = statusButton.dataset.toggleStatus;
+            document.getElementById("status-employee-title").textContent = activo
+                ? `¿Desactivar a ${statusButton.dataset.toggleName}?`
+                : `¿Activar a ${statusButton.dataset.toggleName}?`;
+            document.getElementById("status-employee-copy").textContent = activo
+                ? "El empleado dejará de aparecer como activo. Sus datos y cursos se conservarán."
+                : "El empleado volverá a estar activo y aparecerá en el directorio.";
+            const submit = document.getElementById("status-employee-submit");
+            submit.textContent = activo ? "Desactivar empleado" : "Activar empleado";
+            submit.classList.toggle("btn-warning", activo);
+            submit.classList.toggle("btn-success", !activo);
+            statusDialog.showModal();
+            return;
+        }
+        const button = event.target.closest("[data-delete-employee]");
+        if (!button) return;
+        document.getElementById("delete-employee-id").value = button.dataset.deleteEmployee;
+        document.getElementById("delete-employee-title").textContent = `¿Eliminar a ${button.dataset.deleteName}?`;
+        deleteDialog.showModal();
+    });
+
+    const form = document.getElementById("employee-form");
+    const panels = [...form.querySelectorAll("[data-wizard-panel]")];
+    const indicators = [...document.querySelectorAll("[data-step-indicator]")];
+    let currentStep = 0;
+    form.noValidate = true;
+
+    function showStep(step) {
+        currentStep = step;
+        panels.forEach((panel, index) => panel.hidden = index !== step);
+        indicators.forEach((indicator, index) => {
+            indicator.classList.toggle("is-current", index === step);
+            indicator.classList.toggle("is-complete", index < step);
+        });
+    }
+
+    function stepIsValid(step) {
+        const fields = [...panels[step].querySelectorAll("input, select, textarea")];
+        const invalid = fields.find(field => !field.checkValidity());
+        if (!invalid) return true;
+        invalid.reportValidity();
+        return false;
+    }
+
+    form.querySelectorAll("[data-next-step]").forEach(button => button.addEventListener("click", () => {
+        if (stepIsValid(currentStep)) showStep(Math.min(currentStep + 1, panels.length - 1));
+    }));
+    form.querySelectorAll("[data-previous-step]").forEach(button => button.addEventListener("click", () => showStep(Math.max(currentStep - 1, 0))));
+    form.addEventListener("submit", event => {
+        for (let step = 0; step < panels.length; step++) {
+            if (!stepIsValid(step)) {
+                event.preventDefault();
+                showStep(step);
+                stepIsValid(step);
+                return;
+            }
+        }
+    });
+
+    const courseList = document.getElementById("employee-courses");
+    const courseTemplate = document.getElementById("course-template");
+    function updateCourseDate(entry) {
+        const status = entry.querySelector('select[name$=".Estatus"]');
+        const date = entry.querySelector('input[name$=".FechaFinalizacion"]');
+        const required = status.value === "COMPLETADO";
+        date.required = required;
+        date.previousElementSibling.textContent = required ? "FECHA DE FINALIZACIÓN *" : "FECHA DE FINALIZACIÓN";
+    }
+    function reindexCourses() {
+        courseList.querySelectorAll(".course-entry").forEach((entry, index) => {
+            entry.querySelectorAll("[name]").forEach(field => {
+                field.name = field.name.replace(/Cursos\[\d+\]/g, `Cursos[${index}]`);
+            });
+            entry.querySelector(".course-entry-heading strong").textContent = `Curso ${index + 1}`;
+        });
+    }
+    courseList.querySelectorAll(".course-entry").forEach(updateCourseDate);
+    courseList.addEventListener("change", event => {
+        if (event.target.matches('select[name$=".Estatus"]')) updateCourseDate(event.target.closest(".course-entry"));
+    });
+    document.getElementById("add-course").addEventListener("click", () => {
+        const index = courseList.querySelectorAll(".course-entry").length;
+        courseList.insertAdjacentHTML("beforeend", courseTemplate.innerHTML.replaceAll("__index__", index));
+        updateCourseDate(courseList.lastElementChild);
+    });
+    courseList.addEventListener("click", event => {
+        const removeButton = event.target.closest(".remove-course");
+        if (removeButton) {
+            removeButton.closest(".course-entry").remove();
+            reindexCourses();
+        }
+    });
+})();
+</script>

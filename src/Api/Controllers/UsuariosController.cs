@@ -65,7 +65,8 @@ public class UsuariosController : ControllerBase
                 }),
                 Cursos = u.CursosUsuarios.Select(c => new
                 {
-                    Curso = c.Curso.Nombre,
+                    Curso = c.NombreCurso,
+                    c.Institucion,
                     c.FechaInicio,
                     c.FechaFinalizacion,
                     c.Estatus
@@ -80,9 +81,7 @@ public class UsuariosController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Eliminar(int id)
     {
-        var usuario = await _db.Usuarios
-            .Include(u => u.CursosUsuarios)
-            .FirstOrDefaultAsync(u => u.Id == id);
+        var usuario = await _db.Usuarios.Include(u => u.CursosUsuarios).FirstOrDefaultAsync(u => u.Id == id);
 
         if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
 
@@ -96,7 +95,7 @@ public class UsuariosController : ControllerBase
     [HttpGet("estados")]
     public async Task<ActionResult> GetEstados()
     {
-        var estados = await _db.Estados.OrderBy(e => e.NombreEstado).ToListAsync();
+        var estados = await _db.Estados.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
         return Ok(estados);
     }
 
@@ -192,10 +191,15 @@ public class UsuariosController : ControllerBase
             return BadRequest(new { error = "El usuario ya está inscrito en este curso." });
 
         // 2. Crear la relación
+        var curso = await _db.Cursos.FindAsync(dto.CursoId);
+        if (curso == null || curso.Estatus != "activo")
+            return BadRequest(new { error = "El curso seleccionado no existe o está inactivo." });
+
         var nuevaInscripcion = new CursoUsuario
         {
             UsuarioId = dto.UsuarioId,
             CursoId = dto.CursoId,
+            NombreCurso = curso.Nombre,
             FechaInicio = DateTime.UtcNow,
             Estatus = "EN CURSO" 
         };
@@ -237,4 +241,3 @@ public class AsignarCursoDto
     public int UsuarioId { get; set; }
     public int CursoId { get; set; }
 }
-

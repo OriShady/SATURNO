@@ -53,6 +53,6 @@ if (Directory.Exists(frontendCssPath))
 app.MapControllers();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Admin}/{action=Index}/{id?}");
+    pattern: "{controller=Admin}/{action=Empleados}/{id?}");
 
 app.Run();

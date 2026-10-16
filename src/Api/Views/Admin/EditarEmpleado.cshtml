@@ -1,0 +1,116 @@
+@model EmpleadoFormViewModel
+@{
+    ViewData["Title"] = "Editar empleado";
+    ViewData["Active"] = "Empleados";
+}
+<header class="header"><h1>Editar empleado</h1><p>Actualiza los datos de identificación y domicilio.</p></header>
+<section class="card employee-edit-card">
+    <form asp-action="EditarEmpleado" method="post">
+        @Html.AntiForgeryToken()
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <section class="edit-form-section">
+            <h2 class="form-section-title">Datos personales</h2>
+            <div class="form-grid">
+            <div>
+                <div class="form-group"><label asp-for="Nombres">NOMBRE(S) *</label><input asp-for="Nombres" required /><span asp-validation-for="Nombres"></span></div>
+                <div class="form-group"><label asp-for="ApellidoPaterno">APELLIDO PATERNO *</label><input asp-for="ApellidoPaterno" required /><span asp-validation-for="ApellidoPaterno"></span></div>
+                <div class="form-group"><label asp-for="ApellidoMaterno">APELLIDO MATERNO</label><input asp-for="ApellidoMaterno" /></div>
+                <div class="form-group"><label asp-for="FechaNacimiento">FECHA DE NACIMIENTO *</label><input asp-for="FechaNacimiento" type="date" required /></div>
+                <div class="form-group"><label asp-for="FechaIngreso">FECHA DE INGRESO *</label><input asp-for="FechaIngreso" type="date" required /></div>
+            </div>
+            <div>
+                <div class="form-group"><label asp-for="SexoId">SEXO *</label><select asp-for="SexoId" required><option value="">Selecciona...</option>@foreach (var sexo in Model.Sexos) { <option value="@sexo.Id">@sexo.Descripcion</option> }</select></div>
+                <div class="form-group"><label asp-for="CorreoEmpresarial">CORREO *</label><input asp-for="CorreoEmpresarial" type="email" required /><span asp-validation-for="CorreoEmpresarial"></span></div>
+                <div class="form-group"><label asp-for="Telefono">TELÉFONO</label><input asp-for="Telefono" type="tel" /></div>
+            </div>
+            </div>
+        </section>
+        <section class="edit-form-section">
+            <h2 class="form-section-title">Domicilio</h2>
+            <div class="form-grid">
+            <div>
+                <div class="form-group"><label asp-for="EstadoId">ESTADO *</label><select asp-for="EstadoId" required><option value="">Selecciona...</option>@foreach (var estado in Model.Estados) { <option value="@estado.Id">@estado.NombreEstado</option> }</select></div>
+                <div class="form-group"><label asp-for="Calle">CALLE *</label><input asp-for="Calle" required /></div>
+                <div class="form-group form-row">
+                    <div class="flex-1"><label asp-for="NumeroExterior">NÚMERO EXTERIOR *</label><input asp-for="NumeroExterior" required /></div>
+                    <div class="flex-1"><label asp-for="NumeroInterior">NÚMERO INTERIOR</label><input asp-for="NumeroInterior" /></div>
+                </div>
+            </div>
+            <div>
+                <div class="form-group"><label asp-for="CodigoPostal">CÓDIGO POSTAL *</label><input asp-for="CodigoPostal" required /></div>
+                <div class="form-group"><label asp-for="Colonia">COLONIA *</label><input asp-for="Colonia" required /></div>
+                <div class="form-group"><label asp-for="Municipio">MUNICIPIO *</label><input asp-for="Municipio" required /></div>
+            </div>
+            </div>
+        </section>
+        <section class="edit-form-section edit-courses-section">
+            <h2 class="form-section-title">Cursos de certificados</h2>
+            <p class="section-description">Los cambios reemplazan la lista actual de cursos del empleado.</p>
+            <div id="edit-employee-courses">
+        @for (var i = 0; i < Model.Cursos.Count; i++)
+        {
+            <div class="course-entry">
+                <div class="course-entry-heading"><strong>Curso @(i + 1)</strong><button type="button" class="text-button remove-course">Quitar</button></div>
+                <div class="course-entry-grid">
+                    <div class="form-group"><label>CURSO *</label><input name="Cursos[@i].NombreCurso" value="@Model.Cursos[i].NombreCurso" required maxlength="200" /></div>
+                    <div class="form-group"><label>INSTITUCIÓN *</label><input name="Cursos[@i].Institucion" value="@Model.Cursos[i].Institucion" required maxlength="150" /></div>
+                    <div class="form-group"><label>FECHA DE FINALIZACIÓN</label><input name="Cursos[@i].FechaFinalizacion" type="date" value="@(Model.Cursos[i].FechaFinalizacion?.ToString("yyyy-MM-dd"))" /></div>
+                    <div class="form-group"><label>ESTATUS *</label><select name="Cursos[@i].Estatus" required><option value="COMPLETADO" selected="@(Model.Cursos[i].Estatus == "COMPLETADO")">Completado</option><option value="EN CURSO" selected="@(Model.Cursos[i].Estatus == "EN CURSO")">En curso</option></select></div>
+                </div>
+            </div>
+        }
+            </div>
+        </section>
+        <template id="edit-course-template">
+            <div class="course-entry">
+                <div class="course-entry-heading"><strong>Curso</strong><button type="button" class="text-button remove-course">Quitar</button></div>
+                <div class="course-entry-grid">
+                    <div class="form-group"><label>CURSO *</label><input name="Cursos[__index__].NombreCurso" required maxlength="200" /></div>
+                    <div class="form-group"><label>INSTITUCIÓN *</label><input name="Cursos[__index__].Institucion" required maxlength="150" /></div>
+                    <div class="form-group"><label>FECHA DE FINALIZACIÓN</label><input name="Cursos[__index__].FechaFinalizacion" type="date" /></div>
+                    <div class="form-group"><label>ESTATUS *</label><select name="Cursos[__index__].Estatus" required><option value="COMPLETADO">Completado</option><option value="EN CURSO">En curso</option></select></div>
+                </div>
+            </div>
+        </template>
+        <button type="button" class="btn btn-secondary add-course" id="add-edit-course">＋ Agregar otro curso</button>
+        <div class="form-footer"><a asp-action="Empleados" class="btn btn-secondary">Cancelar</a><button type="submit" class="btn btn-primary">Guardar cambios</button></div>
+    </form>
+</section>
+<script>
+(() => {
+    const courses = document.getElementById("edit-employee-courses");
+    const template = document.getElementById("edit-course-template");
+    function updateCourseDate(entry) {
+        const status = entry.querySelector('select[name$=".Estatus"]');
+        const date = entry.querySelector('input[name$=".FechaFinalizacion"]');
+        const required = status.value === "COMPLETADO";
+        date.required = required;
+        date.previousElementSibling.textContent = required ? "FECHA DE FINALIZACIÓN *" : "FECHA DE FINALIZACIÓN";
+    }
+    function reindexCourses() {
+        courses.querySelectorAll(".course-entry").forEach((entry, index) => {
+            entry.querySelectorAll("[name]").forEach(field => {
+                field.name = field.name.replace(/Cursos\[\d+\]/g, `Cursos[${index}]`);
+            });
+            entry.querySelector(".course-entry-heading strong").textContent = `Curso ${index + 1}`;
+        });
+    }
+    courses.querySelectorAll(".course-entry").forEach(updateCourseDate);
+    courses.addEventListener("change", event => {
+        if (event.target.matches('select[name$=".Estatus"]')) updateCourseDate(event.target.closest(".course-entry"));
+    });
+    document.getElementById("add-edit-course").addEventListener("click", () => {
+        const index = courses.querySelectorAll(".course-entry").length;
+        courses.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__index__", index));
+        updateCourseDate(courses.lastElementChild);
+    });
+    courses.addEventListener("click", event => {
+        const button = event.target.closest(".remove-course");
+        if (button) {
+            button.closest(".course-entry").remove();
+            reindexCourses();
+        }
+    });
+})();
+</script>

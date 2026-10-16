@@ -2,7 +2,7 @@
 
 ## 1. Qué hace
 
-SATURNoSQL es un sistema administrativo de cursos implementado con ASP.NET Core MVC y SQL Server. Permite administrar cursos y sus catálogos, buscar cursos, registrar usuarios con domicilio y credenciales, y asignar usuarios a cursos. La interfaz usa vistas Razor y formularios tradicionales; no necesita JavaScript. La API JSON existente se conserva para clientes externos.
+SATURNoSQL es un sistema administrativo de empleados implementado con ASP.NET Core MVC y SQL Server. La pantalla principal permite buscar, filtrar, paginar, registrar, editar y dar de baja empleados; el alta guiada captura sus datos, domicilio y los cursos de sus certificados. Los catálogos de estados, sexos y demás opciones también se administran desde el panel. La API JSON existente se conserva para clientes externos.
 
 ## 2. Arquitectura y organización
 
@@ -19,7 +19,7 @@ SQL Server: NoSqlU1_migrated
 
 - `src/Api/Controllers/Mvc/`: acciones MVC y flujo de pantallas.
 - `src/Api/Models/ViewModels/`: modelos de pantalla, validaciones y datos de formularios.
-- `src/Api/Views/`: vistas Razor, layout y formularios sin JavaScript.
+- `src/Api/Views/`: vistas Razor, layout y flujos progresivos con JavaScript ligero para búsqueda y diálogos.
 - `src/Api/Controllers/`: endpoints JSON de la API, conservados por compatibilidad.
 - `src/Data/Entities/`: modelos persistentes (entidades SQL), `NoSqlUContext`, mapeos y migraciones.
 - `frontend/css/`: hoja de estilos compartida.
@@ -60,9 +60,9 @@ SATURNoSQL/
 └── CONTEXTO_PROYECTO.md                # Este manual
 ```
 
-**Interfaz MVC.** `Views/Shared/_Layout.cshtml` comparte el menú y los estilos; `Views/Admin/` contiene las vistas Dashboard, Categorías, Cursos, Búsqueda, Usuarios, DetalleUsuario, Registro y AsignarCurso. `Models/ViewModels/AdminViewModels.cs` define los modelos de vista y validaciones. Las páginas realizan envíos HTTP convencionales y no cargan scripts del navegador.
+**Interfaz MVC.** `Views/Shared/_Layout.cshtml` comparte el menú y los estilos; `Views/Admin/Empleados.cshtml` concentra el directorio y el alta progresiva, `EditarEmpleado.cshtml` edita su ficha y `Catalogos.cshtml` administra los catálogos. Las pantallas heredadas de cursos siguen disponibles para compatibilidad, pero ya no forman parte de la navegación principal.
 
-**Aplicación/API.** `Api.csproj` define la aplicación web `net7.0`, agrega EF Core SQL Server y Swagger, y referencia `Data` y `Domain`. `Program.cs` registra MVC, Swagger y `NoSqlUContext`, sirve los estilos CSS y configura la ruta por defecto `/` hacia `Admin/Index`. `DefaultConnection` se carga desde User Secrets en desarrollo o desde la variable de entorno correspondiente en despliegues; `Properties/launchSettings.json` define los puertos locales y `Development`. Los controladores existentes bajo `Controllers/` conservan endpoints JSON; `Controllers/Mvc/AdminController.cs` atiende la interfaz MVC.
+**Aplicación/API.** `Api.csproj` define la aplicación web `net7.0`, agrega EF Core SQL Server y Swagger, y referencia `Data` y `Domain`. `Program.cs` registra MVC, Swagger y `NoSqlUContext`, sirve los estilos CSS y configura la ruta por defecto `/` hacia `Admin/Empleados`. `DefaultConnection` se carga desde User Secrets en desarrollo o desde la variable de entorno correspondiente en despliegues; `Properties/launchSettings.json` define los puertos locales y `Development`. Los controladores existentes bajo `Controllers/` conservan endpoints JSON; `Controllers/Mvc/AdminController.cs` atiende la interfaz MVC.
 
 **Datos y otros proyectos.** `Data/Entities/` contiene el modelo relacional: `Categoria`, `Curso`, `Nivel`, `Instructor`, `Usuario`, `UsuarioContrasena`, `Sexo`, `Estado`, `DireccionUsuario` y `CursoUsuario`. `Data.csproj` es una biblioteca `net7.0` con EF Core SQL Server/Design y referencia `Domain`. En `Migrations/`, los archivos `.cs` aplican o revierten cambios; los `.Designer.cs` y `NoSqlUContextModelSnapshot.cs` son metadatos generados, no se editan manualmente. `Domain.csproj` existe pero no tiene clases de dominio. `Tests.csproj` configura xUnit y referencia la API, pero actualmente no hay archivos de pruebas. El workflow de GitHub Actions está vacío, así que no hay CI configurada.
 
@@ -80,15 +80,15 @@ cat_sexo 1 ---- N usuarios 1 ---- 1 usuario_contrasena
                          |
                          +---- 1 ---- N direcciones_usuario N ---- 1 cat_estados
                          |
-                         +---- 1 ---- N cursos_usuarios N ---- 1 cursos
+                         +---- 1 ---- N cursos_usuarios ---- 0..1 cursos (referencia heredada)
 ```
 
 - **Cursos:** requieren categoría, nivel e instructor. Incluyen nombre, descripción, precio, duración, publicación y estatus. El precio y la duración deben ser mayores que cero.
 - **Catálogos de cursos:** categorías, niveles e instructores tienen nombre único. Un curso conserva referencias a estos registros; el borrado de relacionados está restringido.
-- **Usuarios:** guardan datos personales, correo único, teléfono, sexo y estatus. La base exige al menos uno de los apellidos.
+- **Empleados:** guardan datos personales, correo único, teléfono, fecha de ingreso, sexo y estatus. La baja desactiva al empleado para preservar sus datos e historial.
 - **Credenciales:** `usuario_contrasena` es una relación uno a uno con usuario; el login es único y almacena `password_hash`.
 - **Domicilios:** un usuario puede tener varios; cada domicilio referencia un estado. La eliminación del usuario elimina sus credenciales y domicilios en cascada.
-- **Inscripciones:** `cursos_usuarios` resuelve la relación muchos-a-muchos entre usuarios y cursos, con fechas y estatus. Sus claves foráneas restringen el borrado de los registros relacionados.
+- **Cursos de certificados:** `cursos_usuarios` guarda nombre del curso, institución, fecha de finalización y estatus. `id_curso` es opcional para conservar compatibilidad con registros heredados; `nombre_curso` copia el nombre de curso existente en la migración.
 - **Datos iniciales:** EF Core siembra categorías, niveles, instructores y cursos; la migración de usuarios agrega el catálogo de sexos y los estados de México.
 
 Los estatus no están normalizados en una tabla catálogo y el código usa combinaciones de mayúsculas/minúsculas (`activo`/`inactivo` y `ACTIVO`/`INACTIVO`). Respeta los valores esperados por cada controlador y consulta.

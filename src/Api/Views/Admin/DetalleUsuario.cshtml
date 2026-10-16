@@ -23,9 +23,9 @@
     </ul>
 </section>
 <section class="card">
-    <div class="table-header"><h3>🎬 Cursos inscritos</h3><a asp-action="AsignarCurso" asp-route-id="@Model.Id" class="btn btn-primary">＋ Asignar curso</a></div>
+    <div class="table-header"><h3>Cursos registrados por el empleado</h3><a asp-action="AsignarCurso" asp-route-id="@Model.Id" class="btn btn-primary">＋ Registrar curso</a></div>
     <ul class="user-detail-list">
-    @foreach (var inscripcion in Model.CursosUsuarios) { <li>@inscripcion.Curso.Nombre — @inscripcion.Estatus (desde @inscripcion.FechaInicio.ToString("d"))</li> }
+    @foreach (var inscripcion in Model.CursosUsuarios) { <li>@inscripcion.NombreCurso — @(inscripcion.Institucion ?? "Institución no registrada") — @inscripcion.Estatus @(inscripcion.FechaFinalizacion.HasValue ? $"(finalizado el {inscripcion.FechaFinalizacion.Value:d})" : "")</li> }
     </ul>
 </section>
 <a asp-action="Usuarios" class="btn btn-secondary">Volver a usuarios</a>
