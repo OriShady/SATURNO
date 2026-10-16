@@ -22,6 +22,56 @@ namespace Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("NoSqlU.Data.Entities.CapacidadDiferente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id_capacidad_diferente");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("nombre");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("cat_capacidad_diferente", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Ninguna"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Visual"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Nombre = "Auditiva"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Nombre = "Motriz"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Nombre = "Intelectual"
+                        });
+                });
+
             modelBuilder.Entity("NoSqlU.Data.Entities.Categoria", b =>
                 {
                     b.Property<int>("Id")
@@ -745,6 +795,10 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("apellido_paterno");
 
+                    b.Property<int?>("CapacidadDiferenteId")
+                        .HasColumnType("int")
+                        .HasColumnName("id_capacidad_diferente");
+
                     b.Property<string>("CorreoEmpresarial")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -785,7 +839,14 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("telefono");
 
+                    b.Property<string>("TelefonoEmergencia")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("telefono_emergencia");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CapacidadDiferenteId");
 
                     b.HasIndex("CorreoEmpresarial")
                         .IsUnique();
@@ -898,12 +959,20 @@ namespace Data.Migrations
 
             modelBuilder.Entity("NoSqlU.Data.Entities.Usuario", b =>
                 {
+                    b.HasOne("NoSqlU.Data.Entities.CapacidadDiferente", "CapacidadDiferente")
+                        .WithMany()
+                        .HasForeignKey("CapacidadDiferenteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_usuarios_capacidad_diferente");
+
                     b.HasOne("NoSqlU.Data.Entities.Sexo", "Sexo")
                         .WithMany()
                         .HasForeignKey("SexoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_usuarios_sexo");
+
+                    b.Navigation("CapacidadDiferente");
 
                     b.Navigation("Sexo");
                 });

@@ -64,7 +64,7 @@ SATURNoSQL/
 
 **Aplicación/API.** `Api.csproj` define la aplicación web `net7.0`, agrega EF Core SQL Server y Swagger, y referencia `Data` y `Domain`. `Program.cs` registra MVC, Swagger y `NoSqlUContext`, sirve los estilos CSS y configura la ruta por defecto `/` hacia `Admin/Index`. `DefaultConnection` se carga desde User Secrets en desarrollo o desde la variable de entorno correspondiente en despliegues; `Properties/launchSettings.json` define los puertos locales y `Development`. Los controladores existentes bajo `Controllers/` conservan endpoints JSON; `Controllers/Mvc/AdminController.cs` atiende la interfaz MVC.
 
-**Datos y otros proyectos.** `Data/Entities/` contiene el modelo relacional: `Categoria`, `Curso`, `Nivel`, `Instructor`, `Usuario`, `UsuarioContrasena`, `Sexo`, `Estado`, `DireccionUsuario` y `CursoUsuario`. `Data.csproj` es una biblioteca `net7.0` con EF Core SQL Server/Design y referencia `Domain`. En `Migrations/`, los archivos `.cs` aplican o revierten cambios; los `.Designer.cs` y `NoSqlUContextModelSnapshot.cs` son metadatos generados, no se editan manualmente. `Domain.csproj` existe pero no tiene clases de dominio. `Tests.csproj` configura xUnit y referencia la API, pero actualmente no hay archivos de pruebas. El workflow de GitHub Actions está vacío, así que no hay CI configurada.
+**Datos y otros proyectos.** `Data/Entities/` contiene el modelo relacional: `Categoria`, `Curso`, `Nivel`, `Instructor`, `Usuario`, `UsuarioContrasena`, `Sexo`, `Estado`, `CapacidadDiferente`, `DireccionUsuario` y `CursoUsuario`. `Data.csproj` es una biblioteca `net7.0` con EF Core SQL Server/Design y referencia `Domain`. En `Migrations/`, los archivos `.cs` aplican o revierten cambios; los `.Designer.cs` y `NoSqlUContextModelSnapshot.cs` son metadatos generados, no se editan manualmente. `Domain.csproj` existe pero no tiene clases de dominio. `Tests.csproj` configura xUnit y referencia la API, pero actualmente no hay archivos de pruebas. El workflow de GitHub Actions está vacío, así que no hay CI configurada.
 
 **Archivos que no son lógica de negocio.** `bin/` y `obj/` son compilación y archivos generados por .NET; `.vs/` y `.vscode/` guardan estado/configuración del editor; `.git/` contiene historial local; `.gitignore` excluye artefactos y preferencias locales; `.gitattributes` configura finales de línea y comportamiento de Git. No modificar `bin/`, `obj/`, `.vs/` ni archivos EF generados a mano. `src/Api/src/Data/` solo contiene `obj/` generado: la capa Data real está en `src/Data/`. `NoSQLU1_SQLServer/` solo muestra metadatos Git/atributos heredados y no aparece en `NoSqlU.sln`.
 
@@ -76,20 +76,21 @@ El modelo principal está en `src/Data/NoSqlUContext.cs`. Las entidades se mapea
 categorias  1 ---- N cursos N ---- 1 niveles
 instructores 1 -- N cursos
 
-cat_sexo 1 ---- N usuarios 1 ---- 1 usuario_contrasena
-                         |
-                         +---- 1 ---- N direcciones_usuario N ---- 1 cat_estados
-                         |
-                         +---- 1 ---- N cursos_usuarios N ---- 1 cursos
+cat_sexo 1 ---------------------------+
+cat_capacidad_diferente 1 ------------+---- N usuarios 1 ---- 1 usuario_contrasena
+                                          |
+                                          +---- 1 ---- N direcciones_usuario N ---- 1 cat_estados
+                                          |
+                                          +---- 1 ---- N cursos_usuarios N ---- 1 cursos
 ```
 
 - **Cursos:** requieren categoría, nivel e instructor. Incluyen nombre, descripción, precio, duración, publicación y estatus. El precio y la duración deben ser mayores que cero.
 - **Catálogos de cursos:** categorías, niveles e instructores tienen nombre único. Un curso conserva referencias a estos registros; el borrado de relacionados está restringido.
-- **Usuarios:** guardan datos personales, correo único, teléfono, sexo y estatus. La base exige al menos uno de los apellidos.
+- **Usuarios:** guardan datos personales, correo único, teléfono, teléfono de emergencia, sexo, capacidad diferente y estatus. La capacidad diferente referencia `cat_capacidad_diferente`; su catálogo inicial incluye Ninguna, Visual, Auditiva, Motriz e Intelectual. La base exige al menos uno de los apellidos.
 - **Credenciales:** `usuario_contrasena` es una relación uno a uno con usuario; el login es único y almacena `password_hash`.
 - **Domicilios:** un usuario puede tener varios; cada domicilio referencia un estado. La eliminación del usuario elimina sus credenciales y domicilios en cascada.
 - **Inscripciones:** `cursos_usuarios` resuelve la relación muchos-a-muchos entre usuarios y cursos, con fechas y estatus. Sus claves foráneas restringen el borrado de los registros relacionados.
-- **Datos iniciales:** EF Core siembra categorías, niveles, instructores y cursos; la migración de usuarios agrega el catálogo de sexos y los estados de México.
+- **Datos iniciales:** EF Core siembra categorías, niveles, instructores, cursos y capacidades diferentes; la migración de usuarios agrega el catálogo de sexos y los estados de México.
 
 Los estatus no están normalizados en una tabla catálogo y el código usa combinaciones de mayúsculas/minúsculas (`activo`/`inactivo` y `ACTIVO`/`INACTIVO`). Respeta los valores esperados por cada controlador y consulta.
 
@@ -131,14 +132,14 @@ Todos los endpoints usan el prefijo `/api`.
 | Cursos | `GET/POST /cursos`, `GET/PUT/DELETE /cursos/{id}` | Lista y crea cursos; `PUT` cambia estatus; `DELETE` desactiva, no borra. Al crear, se puede proporcionar nivel/instructor por ID o nombre; por nombre se reutilizan o crean. |
 | Búsqueda | `GET /filtro/buscar` | Filtra por texto, categoría, nivel, instructor, estatus y rango de precio. |
 | Catálogos | `/categorias`, `/niveles`, `/instructores` | CRUD según el controlador. Categorías e instructores se desactivan; niveles se borran físicamente. |
-| Usuarios | `GET /usuarios`, `GET /usuarios/estados`, `POST /usuarios/registro`, `PUT /usuarios/{id}/estatus` | Consulta usuarios/estados, registra usuario con credenciales y domicilio, y alterna su estatus. |
+| Usuarios | `GET /api/usuarios`, `GET /api/usuarios/estados`, `GET /api/usuarios/capacidades-diferentes`, `POST /api/usuarios/registro`, `PUT /api/usuarios/{id}/estatus` | Consulta usuarios, catálogos, registra usuario con credenciales y domicilio, y alterna su estatus. |
 | Asignaciones | `GET /usuarios/cursos-disponibles`, `POST /usuarios/asignar-curso` | Lista cursos activos y registra la inscripción; la API rechaza una asignación duplicada. |
 
 Flujo MVC: el navegador envía el formulario; el controlador valida el ViewModel, consulta o persiste mediante `NoSqlUContext`, y devuelve una vista Razor o redirige tras guardar. Los endpoints JSON `/api/...` se mantienen disponibles para clientes externos.
 
 ### Cómo seguir los flujos principales
 
-- **Registro:** `Admin/Registro` muestra el formulario; `Admin/Registrar` valida y crea `Usuario`, `UsuarioContrasena` y `DireccionUsuario`.
+- **Registro:** `Admin/Registro` muestra el formulario; `Admin/Registrar` valida y crea `Usuario`, `UsuarioContrasena` y `DireccionUsuario`. La lista de capacidades diferentes se carga desde `cat_capacidad_diferente`; la API la expone en `GET /api/usuarios/capacidades-diferentes`.
 - **Alta de curso:** `Admin/Cursos` entrega catálogos; `Admin/CrearCurso` valida el ViewModel y crea o reutiliza nivel e instructor.
 - **Asignación:** `Admin/Usuarios` enlaza a `Admin/AsignarCurso`; el POST valida que el curso esté activo y no exista ya la inscripción antes de crear `CursoUsuario`.
 - **Búsqueda:** `Admin/Buscar` aplica los filtros enviados por GET a una consulta LINQ y presenta resultados en Razor.

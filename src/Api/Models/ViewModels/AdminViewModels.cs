@@ -88,10 +88,14 @@ public class RegistroUsuarioViewModel
     public DateTime? FechaNacimiento { get; set; }
     [Required]
     public char? SexoId { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Selecciona una capacidad diferente.")]
+    public int CapacidadDiferenteId { get; set; }
     [Required, EmailAddress, StringLength(150)]
     public string CorreoEmpresarial { get; set; } = string.Empty;
     [StringLength(20)]
     public string? Telefono { get; set; }
+    [StringLength(20)]
+    public string? TelefonoEmergencia { get; set; }
     [Required, StringLength(50)]
     public string UsuarioLogin { get; set; } = string.Empty;
     [Required, DataType(DataType.Password)]
@@ -111,6 +115,7 @@ public class RegistroUsuarioViewModel
     [Required, StringLength(100)]
     public string Municipio { get; set; } = string.Empty;
     public IReadOnlyList<Estado> Estados { get; set; } = Array.Empty<Estado>();
+    public IReadOnlyList<CapacidadDiferente> CapacidadesDiferentes { get; set; } = Array.Empty<CapacidadDiferente>();
 }
 
 public class AsignarCursoViewModel

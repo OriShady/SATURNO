@@ -16,10 +16,12 @@
                 </div>
                 <div class="form-group"><label asp-for="FechaNacimiento">FECHA DE NACIMIENTO *</label><input asp-for="FechaNacimiento" type="date" required /><span asp-validation-for="FechaNacimiento"></span></div>
                 <div class="form-group"><label asp-for="SexoId">SEXO *</label><select asp-for="SexoId" required><option value="">Seleccione...</option><option value="M">Masculino</option><option value="F">Femenino</option><option value="X">Otro</option></select></div>
+                <div class="form-group"><label asp-for="CapacidadDiferenteId">CAPACIDAD DIFERENTE *</label><select asp-for="CapacidadDiferenteId" required><option value="0">Seleccione...</option>@foreach (var capacidad in Model.CapacidadesDiferentes) { <option value="@capacidad.Id">@capacidad.Nombre</option> }</select><span asp-validation-for="CapacidadDiferenteId"></span></div>
             </div>
             <div>
                 <div class="form-group"><label asp-for="CorreoEmpresarial">CORREO EMPRESARIAL *</label><input asp-for="CorreoEmpresarial" type="email" required /><span asp-validation-for="CorreoEmpresarial"></span></div>
                 <div class="form-group"><label asp-for="Telefono">TELÉFONO</label><input asp-for="Telefono" type="tel" /></div>
+                <div class="form-group"><label asp-for="TelefonoEmergencia">TELÉFONO DE EMERGENCIA</label><input asp-for="TelefonoEmergencia" type="tel" /><span asp-validation-for="TelefonoEmergencia"></span></div>
                 <div class="form-group"><label asp-for="UsuarioLogin">NOMBRE DE USUARIO *</label><input asp-for="UsuarioLogin" required /><span asp-validation-for="UsuarioLogin"></span></div>
                 <div class="form-group"><label asp-for="Password">CONTRASEÑA *</label><input asp-for="Password" type="password" required /><span asp-validation-for="Password"></span></div>
             </div>

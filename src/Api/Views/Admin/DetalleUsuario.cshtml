@@ -9,8 +9,10 @@
     <dl class="user-detail-grid">
         <div><dt>Fecha de nacimiento</dt><dd>@Model.FechaNacimiento.ToString("d")</dd></div>
         <div><dt>Sexo</dt><dd>@Model.Sexo.Descripcion</dd></div>
+        <div><dt>Capacidad diferente</dt><dd>@(Model.CapacidadDiferente?.Nombre ?? "-")</dd></div>
         <div><dt>Correo empresarial</dt><dd>@Model.CorreoEmpresarial</dd></div>
         <div><dt>Teléfono</dt><dd>@(Model.Telefono ?? "-")</dd></div>
+        <div><dt>Teléfono de emergencia</dt><dd>@(Model.TelefonoEmergencia ?? "-")</dd></div>
         <div><dt>Usuario de acceso</dt><dd>@(Model.Contrasena?.UsuarioLogin ?? "-")</dd></div>
         <div><dt>Estatus</dt><dd>@Model.Estatus</dd></div>
         <div><dt>Fecha de registro</dt><dd>@Model.FechaRegistro.ToString("g")</dd></div>

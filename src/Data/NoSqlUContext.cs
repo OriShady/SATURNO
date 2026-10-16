@@ -17,6 +17,7 @@ public class NoSqlUContext : DbContext
     // Nuevos DbSets para usuarios y configuración
     public DbSet< Sexo > Sexos => Set< Sexo >();
     public DbSet< Estado > Estados => Set< Estado >();
+    public DbSet< CapacidadDiferente > CapacidadesDiferentes => Set< CapacidadDiferente >();
     public DbSet< Usuario > Usuarios => Set< Usuario >();
     public DbSet< UsuarioContrasena > UsuariosContrasenas => Set< UsuarioContrasena >();
     public DbSet< CursoUsuario > CursosUsuarios => Set< CursoUsuario >();
@@ -109,6 +110,15 @@ public class NoSqlUContext : DbContext
             entity.Property(e => e.NombreEstado).HasColumnName("nombre_estado").HasMaxLength(100).IsRequired();
         });
 
+        modelBuilder.Entity< CapacidadDiferente >(entity =>
+        {
+            entity.ToTable("cat_capacidad_diferente");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id_capacidad_diferente");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.Nombre).IsUnique();
+        });
+
         modelBuilder.Entity< Usuario >(entity =>
         {
             entity.ToTable("usuarios");
@@ -119,8 +129,10 @@ public class NoSqlUContext : DbContext
             entity.Property(e => e.ApellidoMaterno).HasColumnName("apellido_materno").HasMaxLength(50);
             entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_nacimiento").HasColumnType("date");
             entity.Property(e => e.SexoId).HasColumnName("id_sexo").HasColumnType("char(1)");
+            entity.Property(e => e.CapacidadDiferenteId).HasColumnName("id_capacidad_diferente");
             entity.Property(e => e.CorreoEmpresarial).HasColumnName("correo_empresarial").HasMaxLength(150).IsRequired();
             entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
+            entity.Property(e => e.TelefonoEmergencia).HasColumnName("telefono_emergencia").HasMaxLength(20);
             
             // Traducción de TIMESTAMP a SQL Server
             entity.Property(e => e.FechaRegistro).HasColumnName("fecha_registro").HasDefaultValueSql("GETDATE()");
@@ -129,6 +141,8 @@ public class NoSqlUContext : DbContext
             entity.HasIndex(e => e.CorreoEmpresarial).IsUnique();
 
             entity.HasOne(e => e.Sexo).WithMany().HasForeignKey(e => e.SexoId).HasConstraintName("fk_usuarios_sexo").OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CapacidadDiferente).WithMany().HasForeignKey(e => e.CapacidadDiferenteId)
+                .HasConstraintName("fk_usuarios_capacidad_diferente").OnDelete(DeleteBehavior.Restrict);
             
             // Restricción para asegurar al menos un apellido
             entity.HasCheckConstraint("chk_apellidos", "apellido_paterno IS NOT NULL OR apellido_materno IS NOT NULL");
@@ -189,6 +203,14 @@ public class NoSqlUContext : DbContext
             new Sexo { Id = 'M', Descripcion = "Masculino", Estatus = "ACTIVO" },
             new Sexo { Id = 'F', Descripcion = "Femenino", Estatus = "ACTIVO" },
             new Sexo { Id = 'X', Descripcion = "No binario / Otro", Estatus = "ACTIVO" }
+        );
+
+        modelBuilder.Entity< CapacidadDiferente >().HasData(
+            new CapacidadDiferente { Id = 1, Nombre = "Ninguna" },
+            new CapacidadDiferente { Id = 2, Nombre = "Visual" },
+            new CapacidadDiferente { Id = 3, Nombre = "Auditiva" },
+            new CapacidadDiferente { Id = 4, Nombre = "Motriz" },
+            new CapacidadDiferente { Id = 5, Nombre = "Intelectual" }
         );
 
         // Semilla de Estados traducida desde el script

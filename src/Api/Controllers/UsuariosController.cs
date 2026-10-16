@@ -2,6 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoSqlU.Data;
@@ -28,6 +29,8 @@ public class UsuariosController : ControllerBase
                 NombreCompleto = u.Nombres + " " + u.ApellidoPaterno + " " + u.ApellidoMaterno,
                 u.CorreoEmpresarial,
                 u.Telefono,
+                u.TelefonoEmergencia,
+                CapacidadDiferente = u.CapacidadDiferente == null ? null : u.CapacidadDiferente.Nombre,
                 u.Estatus
             })
             .ToListAsync();
@@ -48,8 +51,11 @@ public class UsuariosController : ControllerBase
                 u.ApellidoMaterno,
                 u.FechaNacimiento,
                 Sexo = u.Sexo.Descripcion,
+                u.CapacidadDiferenteId,
+                CapacidadDiferente = u.CapacidadDiferente == null ? null : u.CapacidadDiferente.Nombre,
                 u.CorreoEmpresarial,
                 u.Telefono,
+                u.TelefonoEmergencia,
                 u.FechaRegistro,
                 u.Estatus,
                 UsuarioLogin = u.Contrasena == null ? null : u.Contrasena.UsuarioLogin,
@@ -100,9 +106,23 @@ public class UsuariosController : ControllerBase
         return Ok(estados);
     }
 
+    [HttpGet("capacidades-diferentes")]
+    public async Task<ActionResult> GetCapacidadesDiferentes()
+    {
+        var capacidades = await _db.CapacidadesDiferentes
+            .AsNoTracking()
+            .OrderBy(c => c.Id)
+            .Select(c => new { c.Id, c.Nombre })
+            .ToListAsync();
+        return Ok(capacidades);
+    }
+
     [HttpPost("registro")]
     public async Task<ActionResult> Registrar([FromBody] RegistroUsuarioDto dto)
     {
+        if (!await _db.CapacidadesDiferentes.AnyAsync(c => c.Id == dto.CapacidadDiferenteId))
+            return BadRequest(new { error = "La capacidad diferente seleccionada no existe." });
+
         // 1. Validaciones para evitar duplicados
         if (await _db.Usuarios.AnyAsync(u => u.CorreoEmpresarial == dto.CorreoEmpresarial))
             return BadRequest(new { error = "El correo empresarial ya está registrado." });
@@ -121,8 +141,10 @@ public class UsuariosController : ControllerBase
             ApellidoMaterno = dto.ApellidoMaterno,
             FechaNacimiento = dto.FechaNacimiento,
             SexoId = dto.SexoId,
+            CapacidadDiferenteId = dto.CapacidadDiferenteId,
             CorreoEmpresarial = dto.CorreoEmpresarial,
             Telefono = dto.Telefono,
+            TelefonoEmergencia = dto.TelefonoEmergencia,
             Estatus = "ACTIVO"
         };
 
@@ -217,8 +239,12 @@ public class RegistroUsuarioDto
     public string? ApellidoMaterno { get; set; }
     public DateTime FechaNacimiento { get; set; }
     public char SexoId { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Selecciona una capacidad diferente válida.")]
+    public int CapacidadDiferenteId { get; set; }
     public string CorreoEmpresarial { get; set; } = null!;
     public string? Telefono { get; set; }
+    [StringLength(20)]
+    public string? TelefonoEmergencia { get; set; }
     public string UsuarioLogin { get; set; } = null!;
     public string Password { get; set; } = null!;
 
@@ -237,4 +263,3 @@ public class AsignarCursoDto
     public int UsuarioId { get; set; }
     public int CursoId { get; set; }
 }
-

@@ -197,6 +197,7 @@ public class AdminController : Controller
     {
         var usuarios = await _db.Usuarios
             .AsNoTracking()
+            .Include(u => u.CapacidadDiferente)
             .OrderBy(u => u.Id)
             .ToListAsync();
         return View(usuarios);
@@ -208,6 +209,7 @@ public class AdminController : Controller
         var usuario = await _db.Usuarios
             .AsNoTracking()
             .Include(u => u.Sexo)
+            .Include(u => u.CapacidadDiferente)
             .Include(u => u.Contrasena)
             .Include(u => u.Direcciones).ThenInclude(d => d.Estado)
             .Include(u => u.CursosUsuarios).ThenInclude(cu => cu.Curso)
@@ -233,6 +235,8 @@ public class AdminController : Controller
             ModelState.AddModelError(nameof(model.CorreoEmpresarial), "El correo empresarial ya está registrado.");
         if (await _db.UsuariosContrasenas.AnyAsync(u => u.UsuarioLogin == model.UsuarioLogin))
             ModelState.AddModelError(nameof(model.UsuarioLogin), "El nombre de usuario ya existe.");
+        if (!await _db.CapacidadesDiferentes.AnyAsync(c => c.Id == model.CapacidadDiferenteId))
+            ModelState.AddModelError(nameof(model.CapacidadDiferenteId), "Selecciona una capacidad diferente válida.");
 
         if (!ModelState.IsValid)
             return View("Registro", await BuildRegistroViewModelAsync(model));
@@ -246,8 +250,10 @@ public class AdminController : Controller
             ApellidoMaterno = model.ApellidoMaterno?.Trim(),
             FechaNacimiento = model.FechaNacimiento!.Value,
             SexoId = model.SexoId!.Value,
+            CapacidadDiferenteId = model.CapacidadDiferenteId,
             CorreoEmpresarial = model.CorreoEmpresarial.Trim(),
             Telefono = model.Telefono?.Trim(),
+            TelefonoEmergencia = model.TelefonoEmergencia?.Trim(),
             Estatus = "ACTIVO",
             Contrasena = new UsuarioContrasena
             {
@@ -348,6 +354,9 @@ public class AdminController : Controller
     private async Task<RegistroUsuarioViewModel> BuildRegistroViewModelAsync(RegistroUsuarioViewModel model)
     {
         model.Estados = await _db.Estados.AsNoTracking().OrderBy(e => e.NombreEstado).ToListAsync();
+        model.CapacidadesDiferentes = await _db.CapacidadesDiferentes.AsNoTracking()
+            .OrderBy(c => c.Id)
+            .ToListAsync();
         return model;
     }
 
