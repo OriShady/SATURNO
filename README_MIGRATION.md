@@ -43,6 +43,7 @@ Si deseas, puedo ejecutar la generación de migraciones y ajustar la semilla par
 3. La API usa:
    - HTTP: `http://localhost:62391`
    - HTTPS: `https://localhost:62390`
+<<<<<<< Updated upstream
 4. Ejecuta la aplicación MVC desde la raíz del repositorio con `dotnet run --project src/Api`.
 5. Prueba primero `http://localhost:62391/api/health`. Debe responder:
    `{ "db": "ok" }`
@@ -58,3 +59,13 @@ La conexión de `appsettings.json` apunta explícitamente a la base `NoSqlU1_mig
 - `frontend/css` y `frontend/js`: recursos estáticos consumidos por las vistas.
 
 Las rutas `/api/...` se mantienen para conservar compatibilidad con los clientes existentes.
+=======
+4. No necesitas iniciar Live Server: la interfaz la sirve directamente la aplicación ASP.NET Core.
+5. Guarda la cadena de conexión localmente (User Secrets; no en el repositorio):
+   `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=NoSqlU1_migrated;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True" --project src/Api/Api.csproj`
+6. Prueba primero `http://localhost:62391/api/health`. Debe responder:
+   `{ "db": "ok" }`
+7. Abre la interfaz MVC en `http://localhost:62391/` (o el HTTPS local configurado).
+
+Configura el servidor y la base que correspondan a tu entorno en User Secrets. La interfaz se renderiza con MVC/Razor y formularios HTTP; no requiere JavaScript ni Live Server.
+>>>>>>> Stashed changes
