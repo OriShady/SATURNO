@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using NoSqlU.Data;
 
 namespace NoSqlU.Api.Controllers;
@@ -8,8 +7,8 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class FiltroController : ControllerBase
 {
-    private readonly NoSqlUContext _db;
-    public FiltroController(NoSqlUContext db) => _db = db;
+    private readonly SaturnoStore _db;
+    public FiltroController(SaturnoStore db) => _db = db;
 
     [HttpGet("buscar")]
     public async Task<IActionResult> Buscar(
@@ -21,11 +20,7 @@ public class FiltroController : ControllerBase
         [FromQuery] decimal? min,
         [FromQuery] decimal? max)
     {
-        var query = _db.Cursos
-            .Include(c => c.Categoria)
-            .Include(c => c.Nivel)
-            .Include(c => c.Instructor)
-            .AsQueryable();
+        var query = (await _db.CargarCursosAsync()).AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(q))
             query = query.Where(c =>
@@ -33,13 +28,13 @@ public class FiltroController : ControllerBase
                 c.Descripcion.Contains(q));
 
         if (!string.IsNullOrWhiteSpace(categoria))
-            query = query.Where(c => c.Categoria.Nombre == categoria);
+            query = query.Where(c => c.Categoria?.Nombre == categoria);
 
         if (!string.IsNullOrWhiteSpace(nivel))
-            query = query.Where(c => c.Nivel.Nombre == nivel);
+            query = query.Where(c => c.Nivel?.Nombre == nivel);
 
         if (!string.IsNullOrWhiteSpace(instructor))
-            query = query.Where(c => c.Instructor.Nombre == instructor);
+            query = query.Where(c => c.Instructor?.Nombre == instructor);
 
         if (!string.IsNullOrWhiteSpace(estatus))
             query = query.Where(c => c.Estatus == estatus);
@@ -50,6 +45,6 @@ public class FiltroController : ControllerBase
         if (max.HasValue)
             query = query.Where(c => c.Precio <= max.Value);
 
-        return Ok(await query.ToListAsync());
+        return Ok(query.ToList());
     }
 }

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver.Linq;
 using NoSqlU.Data;
 using NoSqlU.Data.Entities;
 
@@ -9,11 +9,11 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class NivelesController : ControllerBase
 {
-    private readonly NoSqlUContext _db;
-    public NivelesController(NoSqlUContext db) => _db = db;
+    private readonly SaturnoStore _db;
+    public NivelesController(SaturnoStore db) => _db = db;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _db.Niveles.ToListAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _db.Niveles.Query.ToListAsync());
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
@@ -27,8 +27,7 @@ public class NivelesController : ControllerBase
     public async Task<IActionResult> Create([FromBody] Nivel model)
     {
         model.FechaCreacion = DateTime.UtcNow;
-        _db.Niveles.Add(model);
-        await _db.SaveChangesAsync();
+        await _db.Niveles.InsertAsync(model);
         return CreatedAtAction(nameof(Get), new { id = model.Id }, model);
     }
 
@@ -39,7 +38,7 @@ public class NivelesController : ControllerBase
         if (existing == null) return NotFound();
         existing.Nombre = model.Nombre;
         existing.Estatus = model.Estatus;
-        await _db.SaveChangesAsync();
+        await _db.Niveles.ReplaceAsync(existing);
         return NoContent();
     }
 
@@ -48,8 +47,9 @@ public class NivelesController : ControllerBase
     {
         var existing = await _db.Niveles.FindAsync(id);
         if (existing == null) return NotFound();
-        _db.Niveles.Remove(existing);
-        await _db.SaveChangesAsync();
+        if (await _db.Cursos.Query.AnyAsync(c => c.NivelId == id))
+            return Conflict(new { error = "El nivel está asociado a uno o más cursos." });
+        await _db.Niveles.DeleteAsync(id);
         return NoContent();
     }
 }

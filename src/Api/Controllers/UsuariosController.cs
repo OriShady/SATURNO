@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver.Linq;
 using NoSqlU.Data;
 using NoSqlU.Data.Entities;
 
@@ -14,18 +14,18 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class UsuariosController : ControllerBase
 {
-    private readonly NoSqlUContext _db;
-    
-    public UsuariosController(NoSqlUContext db) => _db = db;
+    private readonly SaturnoStore _db;
+
+    public UsuariosController(SaturnoStore db) => _db = db;
 
     [HttpGet]
     public async Task<ActionResult> GetUsuarios()
     {
-        var usuarios = await _db.Usuarios
+        var usuarios = await _db.Usuarios.Query
             .Select(u => new
             {
                 u.Id,
-                NombreCompleto = u.Nombres + " " + u.ApellidoPaterno + " " + u.ApellidoMaterno,
+                NombreCompleto = u.Nombres + " " + (u.ApellidoPaterno ?? "") + " " + (u.ApellidoMaterno ?? ""),
                 u.CorreoEmpresarial,
                 u.Telefono,
                 u.Estatus
@@ -37,17 +37,16 @@ public class UsuariosController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult> GetUsuario(int id)
     {
-        var usuario = await _db.Usuarios
-            .AsNoTracking()
-            .Where(u => u.Id == id)
-            .Select(u => new
+        var u = await _db.BuscarDetalleEmpleadoAsync(id);
+        if (u is null) return NotFound(new { error = "Usuario no encontrado." });
+        var usuario = new
             {
                 u.Id,
                 u.Nombres,
                 u.ApellidoPaterno,
                 u.ApellidoMaterno,
                 u.FechaNacimiento,
-                Sexo = u.Sexo.Descripcion,
+                Sexo = u.Sexo?.Descripcion,
                 u.CorreoEmpresarial,
                 u.Telefono,
                 u.FechaRegistro,
@@ -61,7 +60,7 @@ public class UsuariosController : ControllerBase
                     d.CodigoPostal,
                     d.Colonia,
                     d.Municipio,
-                    Estado = d.Estado.NombreEstado
+                    Estado = d.Estado?.NombreEstado
                 }),
                 Cursos = u.CursosUsuarios.Select(c => new
                 {
@@ -71,23 +70,18 @@ public class UsuariosController : ControllerBase
                     c.FechaFinalizacion,
                     c.Estatus
                 })
-            })
-            .FirstOrDefaultAsync();
-
-        if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
+            };
         return Ok(usuario);
     }
 
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Eliminar(int id)
     {
-        var usuario = await _db.Usuarios.Include(u => u.CursosUsuarios).FirstOrDefaultAsync(u => u.Id == id);
+        var usuario = await _db.Usuarios.FindAsync(id);
 
         if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
 
-        _db.CursosUsuarios.RemoveRange(usuario.CursosUsuarios);
-        _db.Usuarios.Remove(usuario);
-        await _db.SaveChangesAsync();
+        await _db.Usuarios.DeleteAsync(id);
 
         return NoContent();
     }
@@ -95,7 +89,7 @@ public class UsuariosController : ControllerBase
     [HttpGet("estados")]
     public async Task<ActionResult> GetEstados()
     {
-        var estados = await _db.Estados.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
+        var estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
         return Ok(estados);
     }
 
@@ -103,14 +97,17 @@ public class UsuariosController : ControllerBase
     public async Task<ActionResult> Registrar([FromBody] RegistroUsuarioDto dto)
     {
         // 1. Validaciones para evitar duplicados
-        if (await _db.Usuarios.AnyAsync(u => u.CorreoEmpresarial == dto.CorreoEmpresarial))
+        if (await _db.Usuarios.Query.AnyAsync(u => u.CorreoEmpresarial == dto.CorreoEmpresarial))
             return BadRequest(new { error = "El correo empresarial ya está registrado." });
 
-        if (await _db.UsuariosContrasenas.AnyAsync(uc => uc.UsuarioLogin == dto.UsuarioLogin))
+        if (await _db.LoginExistsAsync(dto.UsuarioLogin))
             return BadRequest(new { error = "El nombre de usuario (login) ya existe." });
 
         if (string.IsNullOrWhiteSpace(dto.ApellidoPaterno) && string.IsNullOrWhiteSpace(dto.ApellidoMaterno))
             return BadRequest(new { error = "Debe proporcionar al menos un apellido (paterno o materno)." });
+
+        if (await _db.Sexos.FindAsync(dto.SexoId) is null || await _db.Estados.FindAsync(dto.EstadoId) is null)
+            return BadRequest(new { error = "Sexo o estado inexistente." });
 
         // 2. Crear la entidad principal del Usuario
         var nuevoUsuario = new Usuario
@@ -150,8 +147,7 @@ public class UsuariosController : ControllerBase
         });
 
         // 5. Guardar todo en la base de datos dentro de una transacción implícita
-        _db.Usuarios.Add(nuevoUsuario);
-        await _db.SaveChangesAsync();
+        await _db.Usuarios.InsertAsync(nuevoUsuario);
 
         return Ok(new { mensaje = "Usuario registrado exitosamente", idUsuario = nuevoUsuario.Id });
     }
@@ -163,7 +159,7 @@ public class UsuariosController : ControllerBase
         if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
 
         usuario.Estatus = usuario.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
-        await _db.SaveChangesAsync();
+        await _db.CambiarEstatusEmpleadoAsync(usuario);
 
         return Ok(new { mensaje = "Estatus actualizado correctamente", estatus = usuario.Estatus });
     }
@@ -172,11 +168,11 @@ public class UsuariosController : ControllerBase
     public async Task<ActionResult> GetCursosDisponibles()
     {
         // Traer los cursos activos en el menu
-        var cursos = await _db.Cursos
+        var cursos = await _db.Cursos.Query
             .Where(c => c.Estatus == "activo")
             .Select(c => new { c.Id, c.Nombre })
             .ToListAsync();
-        
+
         return Ok(cursos);
     }
 
@@ -184,9 +180,9 @@ public class UsuariosController : ControllerBase
     public async Task<ActionResult> AsignarCurso([FromBody] AsignarCursoDto dto)
     {
         // 1. Validar que no esté ya inscrito en ese mismo curso
-        bool yaInscrito = await _db.CursosUsuarios
-            .AnyAsync(cu => cu.UsuarioId == dto.UsuarioId && cu.CursoId == dto.CursoId);
-            
+        if (await _db.Usuarios.FindAsync(dto.UsuarioId) is null) return NotFound();
+        bool yaInscrito = await _db.TieneCursoAsync(dto.UsuarioId, dto.CursoId);
+
         if (yaInscrito) 
             return BadRequest(new { error = "El usuario ya está inscrito en este curso." });
 
@@ -197,15 +193,14 @@ public class UsuariosController : ControllerBase
 
         var nuevaInscripcion = new CursoUsuario
         {
-            UsuarioId = dto.UsuarioId,
             CursoId = dto.CursoId,
             NombreCurso = curso.Nombre,
             FechaInicio = DateTime.UtcNow,
             Estatus = "EN CURSO" 
         };
 
-        _db.CursosUsuarios.Add(nuevaInscripcion);
-        await _db.SaveChangesAsync();
+        if (!await _db.AsignarCursoAsync(dto.UsuarioId, nuevaInscripcion))
+            return Conflict(new { error = "La inscripción ya existe o el empleado fue eliminado." });
 
         return Ok(new { mensaje = "Curso asignado correctamente al usuario." });
     }

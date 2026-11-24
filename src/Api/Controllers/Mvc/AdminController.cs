@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver.Linq;
 using NoSqlU.Api.Models.ViewModels;
 using NoSqlU.Data;
 using NoSqlU.Data.Entities;
@@ -10,25 +10,19 @@ namespace NoSqlU.Api.Controllers.Mvc;
 
 public class AdminController : Controller
 {
-    private readonly NoSqlUContext _db;
+    private readonly SaturnoStore _db;
 
-    public AdminController(NoSqlUContext db) => _db = db;
+    public AdminController(SaturnoStore db) => _db = db;
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
         var model = new DashboardViewModel
         {
-            TotalCursos = await _db.Cursos.CountAsync(),
-            TotalCategorias = await _db.Categorias.CountAsync(),
-            CursosActivos = await _db.Cursos.CountAsync(c => c.Estatus == "activo"),
-            Cursos = await _db.Cursos
-                .AsNoTracking()
-                .Include(c => c.Categoria)
-                .Include(c => c.Nivel)
-                .Include(c => c.Instructor)
-                .OrderByDescending(c => c.FechaCreacion)
-                .ToListAsync()
+            TotalCursos = await _db.Cursos.Query.CountAsync(),
+            TotalCategorias = await _db.Categorias.Query.CountAsync(),
+            CursosActivos = await _db.Cursos.Query.CountAsync(c => c.Estatus == "activo"),
+            Cursos = (await _db.CargarCursosAsync()).OrderByDescending(c => c.FechaCreacion).ToList()
         };
 
         return View(model);
@@ -48,20 +42,19 @@ public class AdminController : Controller
             return View("Categorias", await BuildCategoriasViewModelAsync(nuevaCategoria));
 
         var nombre = nuevaCategoria.Nombre.Trim();
-        if (await _db.Categorias.AnyAsync(c => c.Nombre == nombre))
+        if (await _db.Categorias.Query.AnyAsync(c => c.Nombre == nombre))
         {
             ModelState.AddModelError(nameof(nuevaCategoria.Nombre), "Ya existe una categoría con ese nombre.");
             return View("Categorias", await BuildCategoriasViewModelAsync(nuevaCategoria));
         }
 
-        _db.Categorias.Add(new Categoria
+        await _db.Categorias.InsertAsync(new Categoria
         {
             Nombre = nombre,
             Descripcion = nuevaCategoria.Descripcion?.Trim(),
             Estatus = "activo",
             FechaCreacion = DateTime.UtcNow
         });
-        await _db.SaveChangesAsync();
         TempData["Mensaje"] = "Categoría creada correctamente.";
         return RedirectToAction(nameof(Categorias));
     }
@@ -74,7 +67,7 @@ public class AdminController : Controller
         if (categoria is null) return NotFound();
 
         categoria.Estatus = categoria.Estatus == "activo" ? "inactivo" : "activo";
-        await _db.SaveChangesAsync();
+        await _db.Categorias.ReplaceAsync(categoria);
         return RedirectToAction(nameof(Categorias));
     }
 
@@ -91,7 +84,7 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
             return View("Cursos", await BuildCursoViewModelAsync(model));
 
-        var categoria = await _db.Categorias
+        var categoria = await _db.Categorias.Query
             .FirstOrDefaultAsync(c => c.Id == model.CategoriaId && c.Estatus == "activo");
         if (categoria is null)
         {
@@ -100,19 +93,20 @@ public class AdminController : Controller
         }
 
         var nombreNivel = model.Nivel.Trim();
-        var nivel = await _db.Niveles.FirstOrDefaultAsync(n => n.Nombre == nombreNivel);
+        var nivel = await _db.Niveles.Query.FirstOrDefaultAsync(n => n.Nombre == nombreNivel);
         if (nivel is null)
         {
             nivel = new Nivel { Nombre = nombreNivel, Estatus = "activo", FechaCreacion = DateTime.UtcNow };
-            _db.Niveles.Add(nivel);
+            await _db.Niveles.InsertAsync(nivel);
         }
         else
         {
             nivel.Estatus = "activo";
+            await _db.Niveles.ReplaceAsync(nivel);
         }
 
         var nombreInstructor = model.Instructor.Trim();
-        var instructor = await _db.Instructores.FirstOrDefaultAsync(i => i.Nombre == nombreInstructor);
+        var instructor = await _db.Instructores.Query.FirstOrDefaultAsync(i => i.Nombre == nombreInstructor);
         if (instructor is null)
         {
             instructor = new Instructor
@@ -123,27 +117,27 @@ public class AdminController : Controller
                 Estatus = "activo",
                 FechaCreacion = DateTime.UtcNow
             };
-            _db.Instructores.Add(instructor);
+            await _db.Instructores.InsertAsync(instructor);
         }
         else
         {
             instructor.Estatus = "activo";
+            await _db.Instructores.ReplaceAsync(instructor);
         }
 
-        _db.Cursos.Add(new Curso
+        await _db.Cursos.InsertAsync(new Curso
         {
             Nombre = model.Nombre.Trim(),
             Descripcion = model.Descripcion.Trim(),
             Precio = model.Precio,
             DuracionMinutos = model.DuracionMinutos,
             FechaPublicacion = model.FechaPublicacion!.Value,
-            Categoria = categoria,
-            Nivel = nivel,
-            Instructor = instructor,
+            CategoriaId = categoria.Id,
+            NivelId = nivel.Id,
+            InstructorId = instructor.Id,
             Estatus = "activo",
             FechaCreacion = DateTime.UtcNow
         });
-        await _db.SaveChangesAsync();
         TempData["Mensaje"] = "Curso creado correctamente.";
         return RedirectToAction(nameof(Index));
     }
@@ -156,28 +150,23 @@ public class AdminController : Controller
         if (curso is null) return NotFound();
 
         curso.Estatus = curso.Estatus == "activo" ? "inactivo" : "activo";
-        await _db.SaveChangesAsync();
+        await _db.Cursos.ReplaceAsync(curso);
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
     public async Task<IActionResult> Buscar(BuscarCursosViewModel model)
     {
-        var query = _db.Cursos
-            .AsNoTracking()
-            .Include(c => c.Categoria)
-            .Include(c => c.Nivel)
-            .Include(c => c.Instructor)
-            .AsQueryable();
+        var query = (await _db.CargarCursosAsync()).AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(model.Q))
             query = query.Where(c => c.Nombre.Contains(model.Q) || c.Descripcion.Contains(model.Q));
         if (!string.IsNullOrWhiteSpace(model.Categoria))
-            query = query.Where(c => c.Categoria!.Nombre == model.Categoria);
+            query = query.Where(c => c.Categoria?.Nombre == model.Categoria);
         if (!string.IsNullOrWhiteSpace(model.Nivel))
-            query = query.Where(c => c.Nivel!.Nombre == model.Nivel);
+            query = query.Where(c => c.Nivel?.Nombre == model.Nivel);
         if (!string.IsNullOrWhiteSpace(model.Instructor))
-            query = query.Where(c => c.Instructor!.Nombre == model.Instructor);
+            query = query.Where(c => c.Instructor?.Nombre == model.Instructor);
         if (!string.IsNullOrWhiteSpace(model.Estatus))
             query = query.Where(c => c.Estatus == model.Estatus);
         if (model.Min.HasValue)
@@ -185,10 +174,10 @@ public class AdminController : Controller
         if (model.Max.HasValue)
             query = query.Where(c => c.Precio <= model.Max.Value);
 
-        model.Categorias = await _db.Categorias.AsNoTracking().Where(c => c.Estatus == "activo").OrderBy(c => c.Nombre).ToListAsync();
-        model.Niveles = await _db.Niveles.AsNoTracking().Where(n => n.Estatus == "activo").OrderBy(n => n.Nombre).ToListAsync();
-        model.Instructores = await _db.Instructores.AsNoTracking().Where(i => i.Estatus == "activo").OrderBy(i => i.Nombre).ToListAsync();
-        model.Resultados = await query.OrderBy(c => c.Nombre).ToListAsync();
+        model.Categorias = await _db.Categorias.Query.Where(c => c.Estatus == "activo").OrderBy(c => c.Nombre).ToListAsync();
+        model.Niveles = await _db.Niveles.Query.Where(n => n.Estatus == "activo").OrderBy(n => n.Nombre).ToListAsync();
+        model.Instructores = await _db.Instructores.Query.Where(i => i.Estatus == "activo").OrderBy(i => i.Nombre).ToListAsync();
+        model.Resultados = query.OrderBy(c => c.Nombre).ToList();
         return View(model);
     }
 
@@ -237,15 +226,15 @@ public class AdminController : Controller
         if (model.Cursos.Count == 0)
             ModelState.AddModelError("NuevoEmpleado.Cursos", "Registra al menos un curso del certificado.");
 
-        if (await _db.Usuarios.AnyAsync(u => u.CorreoEmpresarial == model.CorreoEmpresarial.Trim()))
+        if (await _db.Usuarios.Query.AnyAsync(u => u.CorreoEmpresarial == model.CorreoEmpresarial.Trim()))
             ModelState.AddModelError("NuevoEmpleado.CorreoEmpresarial", "El correo empresarial ya está registrado.");
 
-        var sexoValido = model.SexoId.HasValue &&
-            await _db.Sexos.AnyAsync(s => s.Id == model.SexoId.Value && s.Estatus == "ACTIVO");
+        var sexoValido = model.SexoId is char codigoSexo &&
+            (await _db.Sexos.FindAsync(codigoSexo))?.Estatus == "ACTIVO";
         if (!sexoValido)
             ModelState.AddModelError("NuevoEmpleado.SexoId", "Selecciona un sexo activo.");
 
-        if (!await _db.Estados.AnyAsync(e => e.Id == model.EstadoId && e.Estatus == "ACTIVO"))
+        if (!await _db.Estados.Query.AnyAsync(e => e.Id == model.EstadoId && e.Estatus == "ACTIVO"))
             ModelState.AddModelError("NuevoEmpleado.EstadoId", "Selecciona un estado activo.");
 
         if (model.Cursos.Any(c => c.Estatus != "COMPLETADO" && c.Estatus != "EN CURSO"))
@@ -295,8 +284,7 @@ public class AdminController : Controller
             }).ToList()
         };
 
-        _db.Usuarios.Add(usuario);
-        await _db.SaveChangesAsync();
+        await _db.Usuarios.InsertAsync(usuario);
         TempData["Mensaje"] = $"Empleado registrado correctamente (No. {usuario.Id}).";
         return RedirectToAction(nameof(Empleados));
     }
@@ -304,10 +292,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> EditarEmpleado(int id)
     {
-        var usuario = await _db.Usuarios
-            .AsNoTracking()
-            .Include(u => u.Direcciones)
-            .Include(u => u.CursosUsuarios)
+        var usuario = await _db.Usuarios.Query
             .FirstOrDefaultAsync(u => u.Id == id);
         if (usuario is null) return NotFound();
 
@@ -337,8 +322,9 @@ public class AdminController : Controller
                 FechaFinalizacion = c.FechaFinalizacion,
                 Estatus = c.Estatus
             }).ToList(),
-            Estados = await _db.Estados.AsNoTracking().Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync(),
-            Sexos = await _db.Sexos.AsNoTracking().Where(s => s.Estatus == "ACTIVO" || s.Id == usuario.SexoId).OrderBy(s => s.Descripcion).ToListAsync()
+            Estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync(),
+            Sexos = (await _db.Sexos.Query.OrderBy(s => s.Descripcion).ToListAsync())
+                .Where(s => s.Estatus == "ACTIVO" || s.Id == usuario.SexoId).ToList()
         };
         return View(model);
     }
@@ -347,9 +333,7 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditarEmpleado(EmpleadoFormViewModel model)
     {
-        var usuario = await _db.Usuarios
-            .Include(u => u.Direcciones)
-            .Include(u => u.CursosUsuarios)
+        var usuario = await _db.Usuarios.Query
             .FirstOrDefaultAsync(u => u.Id == model.Id);
         if (usuario is null) return NotFound();
 
@@ -363,17 +347,17 @@ public class AdminController : Controller
                 ModelState.AddModelError($"Cursos[{i}].FechaFinalizacion", "Indica la fecha de finalización del curso.");
         }
 
-        if (await _db.Usuarios.AnyAsync(u => u.Id != model.Id && u.CorreoEmpresarial == model.CorreoEmpresarial.Trim()))
+        if (await _db.Usuarios.Query.AnyAsync(u => u.Id != model.Id && u.CorreoEmpresarial == model.CorreoEmpresarial.Trim()))
             ModelState.AddModelError(nameof(model.CorreoEmpresarial), "El correo empresarial ya está registrado.");
-        if (!model.SexoId.HasValue || !await _db.Sexos.AnyAsync(s => s.Id == model.SexoId.Value && s.Estatus == "ACTIVO"))
+        if (model.SexoId is not char codigoSexo || (await _db.Sexos.FindAsync(codigoSexo))?.Estatus != "ACTIVO")
             ModelState.AddModelError(nameof(model.SexoId), "Selecciona un sexo activo.");
-        if (!await _db.Estados.AnyAsync(e => e.Id == model.EstadoId && e.Estatus == "ACTIVO"))
+        if (!await _db.Estados.Query.AnyAsync(e => e.Id == model.EstadoId && e.Estatus == "ACTIVO"))
             ModelState.AddModelError(nameof(model.EstadoId), "Selecciona un estado activo.");
 
         if (!ModelState.IsValid)
         {
-            model.Estados = await _db.Estados.AsNoTracking().Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
-            model.Sexos = await _db.Sexos.AsNoTracking().Where(s => s.Estatus == "ACTIVO").OrderBy(s => s.Descripcion).ToListAsync();
+            model.Estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
+            model.Sexos = await _db.Sexos.Query.Where(s => s.Estatus == "ACTIVO").OrderBy(s => s.Descripcion).ToListAsync();
             return View(model);
         }
 
@@ -389,8 +373,8 @@ public class AdminController : Controller
         var direccion = usuario.Direcciones.FirstOrDefault();
         if (direccion is null)
         {
-            direccion = new DireccionUsuario { UsuarioId = usuario.Id };
-            _db.DireccionesUsuarios.Add(direccion);
+            direccion = new DireccionUsuario();
+            usuario.Direcciones.Add(direccion);
         }
         direccion.EstadoId = model.EstadoId;
         direccion.Calle = model.Calle.Trim();
@@ -400,7 +384,6 @@ public class AdminController : Controller
         direccion.Colonia = model.Colonia.Trim();
         direccion.Municipio = model.Municipio.Trim();
 
-        _db.CursosUsuarios.RemoveRange(usuario.CursosUsuarios);
         usuario.CursosUsuarios = model.Cursos.Select(c => new CursoUsuario
         {
             NombreCurso = c.NombreCurso.Trim(),
@@ -409,7 +392,7 @@ public class AdminController : Controller
             Estatus = c.Estatus
         }).ToList();
 
-        await _db.SaveChangesAsync();
+        await _db.EditarEmpleadoAsync(usuario);
         TempData["Mensaje"] = "Datos del empleado actualizados correctamente.";
         return RedirectToAction(nameof(Empleados));
     }
@@ -418,14 +401,11 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EliminarEmpleado(int id, string? q, string? filtroEstatus, int pagina = 1)
     {
-        var usuario = await _db.Usuarios
-            .Include(u => u.CursosUsuarios)
+        var usuario = await _db.Usuarios.Query
             .FirstOrDefaultAsync(u => u.Id == id);
         if (usuario is null) return NotFound();
 
-        _db.CursosUsuarios.RemoveRange(usuario.CursosUsuarios);
-        _db.Usuarios.Remove(usuario);
-        await _db.SaveChangesAsync();
+        await _db.Usuarios.DeleteAsync(id);
         TempData["Mensaje"] = "El empleado y sus datos relacionados se eliminaron permanentemente.";
         return RedirectToAction(nameof(Empleados), new { q, estatus = filtroEstatus, pagina });
     }
@@ -475,32 +455,35 @@ public class AdminController : Controller
         {
             case "categorias":
                 var categoria = editar
-                    ? await _db.Categorias.FirstOrDefaultAsync(c => c.Id == int.Parse(claveOriginal!))
+                    ? await _db.Categorias.Query.FirstOrDefaultAsync(c => c.Id == int.Parse(claveOriginal!))
                     : new Categoria { FechaCreacion = DateTime.UtcNow };
                 if (categoria is null) return NotFound();
                 categoria.Nombre = elemento.Nombre.Trim();
                 categoria.Descripcion = elemento.Descripcion?.Trim();
                 categoria.Estatus = estatus;
-                if (!editar) _db.Categorias.Add(categoria);
+                if (editar) await _db.Categorias.ReplaceAsync(categoria);
+                else await _db.Categorias.InsertAsync(categoria);
                 break;
             case "niveles":
                 var nivel = editar
-                    ? await _db.Niveles.FirstOrDefaultAsync(n => n.Id == int.Parse(claveOriginal!))
+                    ? await _db.Niveles.Query.FirstOrDefaultAsync(n => n.Id == int.Parse(claveOriginal!))
                     : new Nivel { FechaCreacion = DateTime.UtcNow };
                 if (nivel is null) return NotFound();
                 nivel.Nombre = elemento.Nombre.Trim();
                 nivel.Estatus = estatus;
-                if (!editar) _db.Niveles.Add(nivel);
+                if (editar) await _db.Niveles.ReplaceAsync(nivel);
+                else await _db.Niveles.InsertAsync(nivel);
                 break;
             case "instructores":
                 var instructor = editar
-                    ? await _db.Instructores.FirstOrDefaultAsync(i => i.Id == int.Parse(claveOriginal!))
+                    ? await _db.Instructores.Query.FirstOrDefaultAsync(i => i.Id == int.Parse(claveOriginal!))
                     : new Instructor { FechaCreacion = DateTime.UtcNow, Apellido = string.Empty };
                 if (instructor is null) return NotFound();
                 instructor.Nombre = elemento.Nombre.Trim();
                 instructor.Email = elemento.Descripcion?.Trim();
                 instructor.Estatus = estatus;
-                if (!editar) _db.Instructores.Add(instructor);
+                if (editar) await _db.Instructores.ReplaceAsync(instructor);
+                else await _db.Instructores.InsertAsync(instructor);
                 break;
             case "sexos":
                 var claveSexo = elemento.Clave!.Trim().ToUpperInvariant()[0];
@@ -515,20 +498,22 @@ public class AdminController : Controller
                 }
                 sexo.Descripcion = elemento.Nombre.Trim();
                 sexo.Estatus = estatus.ToUpperInvariant();
-                if (!editar) _db.Sexos.Add(sexo);
+                if (editar) await _db.Sexos.ReplaceAsync(sexo);
+                else await _db.Sexos.InsertAsync(sexo);
                 break;
             case "estados":
                 var estado = editar
-                    ? await _db.Estados.FirstOrDefaultAsync(e => e.Id == int.Parse(claveOriginal!))
+                    ? await _db.Estados.Query.FirstOrDefaultAsync(e => e.Id == int.Parse(claveOriginal!))
                     : new Estado();
                 if (estado is null) return NotFound();
                 estado.NombreEstado = elemento.Nombre.Trim();
                 estado.Estatus = estatus.ToUpperInvariant();
-                if (!editar) _db.Estados.Add(estado);
+                if (editar) await _db.Estados.ReplaceAsync(estado);
+                else await _db.Estados.InsertAsync(estado);
                 break;
         }
 
-        await _db.SaveChangesAsync();
+
         TempData["Mensaje"] = editar ? "Elemento actualizado correctamente." : "Elemento agregado correctamente.";
         return RedirectToAction(nameof(Catalogos), new { tipo, pagina });
     }
@@ -547,29 +532,34 @@ public class AdminController : Controller
                 var categoria = await _db.Categorias.FindAsync(int.Parse(clave));
                 if (categoria is null) return NotFound();
                 categoria.Estatus = categoria.Estatus == "activo" ? "inactivo" : "activo";
+                await _db.Categorias.ReplaceAsync(categoria);
                 break;
             case "niveles":
                 var nivel = await _db.Niveles.FindAsync(int.Parse(clave));
                 if (nivel is null) return NotFound();
                 nivel.Estatus = nivel.Estatus == "activo" ? "inactivo" : "activo";
+                await _db.Niveles.ReplaceAsync(nivel);
                 break;
             case "instructores":
                 var instructor = await _db.Instructores.FindAsync(int.Parse(clave));
                 if (instructor is null) return NotFound();
                 instructor.Estatus = instructor.Estatus == "activo" ? "inactivo" : "activo";
+                await _db.Instructores.ReplaceAsync(instructor);
                 break;
             case "sexos":
                 var sexo = await _db.Sexos.FindAsync(char.Parse(clave));
                 if (sexo is null) return NotFound();
                 sexo.Estatus = sexo.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
+                await _db.Sexos.ReplaceAsync(sexo);
                 break;
             case "estados":
                 var estado = await _db.Estados.FindAsync(int.Parse(clave));
                 if (estado is null) return NotFound();
                 estado.Estatus = estado.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
+                await _db.Estados.ReplaceAsync(estado);
                 break;
         }
-        await _db.SaveChangesAsync();
+
         TempData["Mensaje"] = "Estatus del elemento actualizado; se conserva el historial asociado.";
         return RedirectToAction(nameof(Catalogos), new { tipo, pagina });
     }
@@ -577,13 +567,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> DetalleUsuario(int id)
     {
-        var usuario = await _db.Usuarios
-            .AsNoTracking()
-            .Include(u => u.Sexo)
-            .Include(u => u.Contrasena)
-            .Include(u => u.Direcciones).ThenInclude(d => d.Estado)
-            .Include(u => u.CursosUsuarios).ThenInclude(cu => cu.Curso)
-            .FirstOrDefaultAsync(u => u.Id == id);
+        var usuario = await _db.BuscarDetalleEmpleadoAsync(id);
 
         return usuario is null ? NotFound() : View(usuario);
     }
@@ -598,9 +582,9 @@ public class AdminController : Controller
         if (string.IsNullOrWhiteSpace(model.ApellidoPaterno) && string.IsNullOrWhiteSpace(model.ApellidoMaterno))
             ModelState.AddModelError(nameof(model.ApellidoPaterno), "Debes proporcionar al menos un apellido.");
 
-        if (await _db.Usuarios.AnyAsync(u => u.CorreoEmpresarial == model.CorreoEmpresarial))
+        if (await _db.Usuarios.Query.AnyAsync(u => u.CorreoEmpresarial == model.CorreoEmpresarial))
             ModelState.AddModelError(nameof(model.CorreoEmpresarial), "El correo empresarial ya está registrado.");
-        if (await _db.UsuariosContrasenas.AnyAsync(u => u.UsuarioLogin == model.UsuarioLogin))
+        if (await _db.LoginExistsAsync(model.UsuarioLogin))
             ModelState.AddModelError(nameof(model.UsuarioLogin), "El nombre de usuario ya existe.");
 
         if (!ModelState.IsValid)
@@ -638,8 +622,7 @@ public class AdminController : Controller
             }
         };
 
-        _db.Usuarios.Add(usuario);
-        await _db.SaveChangesAsync();
+        await _db.Usuarios.InsertAsync(usuario);
         TempData["Mensaje"] = $"Usuario registrado correctamente (ID {usuario.Id}).";
         return RedirectToAction(nameof(Empleados));
     }
@@ -652,14 +635,14 @@ public class AdminController : Controller
         if (usuario is null) return NotFound();
 
         usuario.Estatus = usuario.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
-        await _db.SaveChangesAsync();
+        await _db.CambiarEstatusEmpleadoAsync(usuario);
         return RedirectToAction(nameof(Empleados), new { q, estatus = filtroEstatus, pagina });
     }
 
     [HttpGet]
     public async Task<IActionResult> AsignarCurso(int id)
     {
-        var usuario = await _db.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        var usuario = await _db.Usuarios.Query.FirstOrDefaultAsync(u => u.Id == id);
         if (usuario is null) return NotFound();
 
         return View(await BuildAsignarCursoViewModelAsync(usuario.Id, usuario.Nombres, usuario.CorreoEmpresarial));
@@ -674,26 +657,25 @@ public class AdminController : Controller
 
         if (!ModelState.IsValid)
             return View(await BuildAsignarCursoViewModelAsync(usuario.Id, usuario.Nombres, usuario.CorreoEmpresarial, model.CursoId));
-        if (!await _db.Cursos.AnyAsync(c => c.Id == model.CursoId && c.Estatus == "activo"))
+        if (!await _db.Cursos.Query.AnyAsync(c => c.Id == model.CursoId && c.Estatus == "activo"))
         {
             ModelState.AddModelError(nameof(model.CursoId), "El curso seleccionado no existe o está inactivo.");
             return View(await BuildAsignarCursoViewModelAsync(usuario.Id, usuario.Nombres, usuario.CorreoEmpresarial, model.CursoId));
         }
-        if (await _db.CursosUsuarios.AnyAsync(cu => cu.UsuarioId == model.UsuarioId && cu.CursoId == model.CursoId))
+        if (await _db.TieneCursoAsync(model.UsuarioId, model.CursoId))
         {
             ModelState.AddModelError(nameof(model.CursoId), "El usuario ya está inscrito en este curso.");
             return View(await BuildAsignarCursoViewModelAsync(usuario.Id, usuario.Nombres, usuario.CorreoEmpresarial, model.CursoId));
         }
 
-        _db.CursosUsuarios.Add(new CursoUsuario
+        if (!await _db.AsignarCursoAsync(model.UsuarioId, new CursoUsuario
         {
-            UsuarioId = model.UsuarioId,
             CursoId = model.CursoId,
-            NombreCurso = await _db.Cursos.Where(c => c.Id == model.CursoId).Select(c => c.Nombre).FirstAsync(),
+            NombreCurso = await _db.Cursos.Query.Where(c => c.Id == model.CursoId).Select(c => c.Nombre).FirstAsync(),
             FechaInicio = DateTime.UtcNow,
             Estatus = "EN CURSO"
-        });
-        await _db.SaveChangesAsync();
+        }))
+            return Conflict("La inscripción ya existe o el empleado fue eliminado.");
         TempData["Mensaje"] = "Curso asignado correctamente.";
         return RedirectToAction(nameof(DetalleUsuario), new { id = model.UsuarioId });
     }
@@ -703,21 +685,21 @@ public class AdminController : Controller
         return new CategoriasViewModel
         {
             NuevaCategoria = nueva ?? new CategoriaCreateViewModel(),
-            Categorias = await _db.Categorias.AsNoTracking().OrderBy(c => c.Nombre).ToListAsync()
+            Categorias = await _db.Categorias.Query.OrderBy(c => c.Nombre).ToListAsync()
         };
     }
 
     private async Task<CursoCreateViewModel> BuildCursoViewModelAsync(CursoCreateViewModel model)
     {
-        model.Categorias = await _db.Categorias.AsNoTracking().Where(c => c.Estatus == "activo").OrderBy(c => c.Nombre).ToListAsync();
-        model.Niveles = await _db.Niveles.AsNoTracking().Where(n => n.Estatus == "activo").OrderBy(n => n.Nombre).ToListAsync();
-        model.Instructores = await _db.Instructores.AsNoTracking().Where(i => i.Estatus == "activo").OrderBy(i => i.Nombre).ToListAsync();
+        model.Categorias = await _db.Categorias.Query.Where(c => c.Estatus == "activo").OrderBy(c => c.Nombre).ToListAsync();
+        model.Niveles = await _db.Niveles.Query.Where(n => n.Estatus == "activo").OrderBy(n => n.Nombre).ToListAsync();
+        model.Instructores = await _db.Instructores.Query.Where(i => i.Estatus == "activo").OrderBy(i => i.Nombre).ToListAsync();
         return model;
     }
 
     private async Task<RegistroUsuarioViewModel> BuildRegistroViewModelAsync(RegistroUsuarioViewModel model)
     {
-        model.Estados = await _db.Estados.AsNoTracking().Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
+        model.Estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
         return model;
     }
 
@@ -730,7 +712,7 @@ public class AdminController : Controller
             NombreUsuario = nombre,
             CorreoUsuario = correo,
             CursoId = cursoId,
-            Cursos = await _db.Cursos.AsNoTracking()
+            Cursos = await _db.Cursos.Query
                 .Where(c => c.Estatus == "activo")
                 .OrderBy(c => c.Nombre)
                 .ToListAsync()
@@ -745,7 +727,7 @@ public class AdminController : Controller
         bool mostrarFormulario = false)
     {
         const int tamanoPagina = 8;
-        var query = _db.Usuarios.AsNoTracking().AsQueryable();
+        var query = _db.Usuarios.Query.AsQueryable();
         if (!string.IsNullOrWhiteSpace(q))
         {
             var busqueda = q.Trim();
@@ -787,11 +769,11 @@ public class AdminController : Controller
         model ??= new EmpleadoFormViewModel();
         if (model.Cursos.Count == 0)
             model.Cursos.Add(new CursoEmpleadoFormViewModel());
-        model.Estados = await _db.Estados.AsNoTracking()
+        model.Estados = await _db.Estados.Query
             .Where(e => e.Estatus == "ACTIVO")
             .OrderBy(e => e.NombreEstado)
             .ToListAsync();
-        model.Sexos = await _db.Sexos.AsNoTracking()
+        model.Sexos = await _db.Sexos.Query
             .Where(s => s.Estatus == "ACTIVO")
             .OrderBy(s => s.Descripcion)
             .ToListAsync();
@@ -816,19 +798,19 @@ public class AdminController : Controller
         switch (tipo)
         {
             case "categorias":
-                model.TotalElementos = await _db.Categorias.CountAsync();
+                model.TotalElementos = await _db.Categorias.Query.CountAsync();
                 break;
             case "niveles":
-                model.TotalElementos = await _db.Niveles.CountAsync();
+                model.TotalElementos = await _db.Niveles.Query.CountAsync();
                 break;
             case "instructores":
-                model.TotalElementos = await _db.Instructores.CountAsync();
+                model.TotalElementos = await _db.Instructores.Query.CountAsync();
                 break;
             case "sexos":
-                model.TotalElementos = await _db.Sexos.CountAsync();
+                model.TotalElementos = await _db.Sexos.Query.CountAsync();
                 break;
             case "estados":
-                model.TotalElementos = await _db.Estados.CountAsync();
+                model.TotalElementos = await _db.Estados.Query.CountAsync();
                 break;
         }
         model.TotalPaginas = Math.Max(1, (int)Math.Ceiling(model.TotalElementos / (double)tamanoPagina));
@@ -836,56 +818,57 @@ public class AdminController : Controller
         switch (tipo)
         {
             case "categorias":
-                model.Elementos = await _db.Categorias.AsNoTracking().OrderBy(c => c.Nombre)
+                model.Elementos = await _db.Categorias.Query.OrderBy(c => c.Nombre)
                     .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
                     .Select(c => new CatalogoFilaViewModel { Clave = c.Id.ToString(), Nombre = c.Nombre, Descripcion = c.Descripcion, Estatus = c.Estatus }).ToListAsync();
                 if (elemento is null && int.TryParse(editar, out var idCategoria))
                 {
-                    var item = await _db.Categorias.AsNoTracking().FirstOrDefaultAsync(c => c.Id == idCategoria);
+                    var item = await _db.Categorias.Query.FirstOrDefaultAsync(c => c.Id == idCategoria);
                     if (item is null) return model;
                     elemento = new CatalogoElementoViewModel { Nombre = item.Nombre, Descripcion = item.Descripcion, Estatus = item.Estatus };
                 }
                 break;
             case "niveles":
-                model.Elementos = await _db.Niveles.AsNoTracking().OrderBy(n => n.Nombre)
+                model.Elementos = await _db.Niveles.Query.OrderBy(n => n.Nombre)
                     .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
                     .Select(n => new CatalogoFilaViewModel { Clave = n.Id.ToString(), Nombre = n.Nombre, Estatus = n.Estatus }).ToListAsync();
                 if (elemento is null && int.TryParse(editar, out var idNivel))
                 {
-                    var item = await _db.Niveles.AsNoTracking().FirstOrDefaultAsync(n => n.Id == idNivel);
+                    var item = await _db.Niveles.Query.FirstOrDefaultAsync(n => n.Id == idNivel);
                     if (item is null) return model;
                     elemento = new CatalogoElementoViewModel { Nombre = item.Nombre, Estatus = item.Estatus };
                 }
                 break;
             case "instructores":
-                model.Elementos = await _db.Instructores.AsNoTracking().OrderBy(i => i.Nombre)
+                model.Elementos = await _db.Instructores.Query.OrderBy(i => i.Nombre)
                     .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
                     .Select(i => new CatalogoFilaViewModel { Clave = i.Id.ToString(), Nombre = i.Nombre, Descripcion = i.Email, Estatus = i.Estatus }).ToListAsync();
                 if (elemento is null && int.TryParse(editar, out var idInstructor))
                 {
-                    var item = await _db.Instructores.AsNoTracking().FirstOrDefaultAsync(i => i.Id == idInstructor);
+                    var item = await _db.Instructores.Query.FirstOrDefaultAsync(i => i.Id == idInstructor);
                     if (item is null) return model;
                     elemento = new CatalogoElementoViewModel { Nombre = item.Nombre, Descripcion = item.Email, Estatus = item.Estatus };
                 }
                 break;
             case "sexos":
-                model.Elementos = await _db.Sexos.AsNoTracking().OrderBy(s => s.Descripcion)
-                    .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
-                    .Select(s => new CatalogoFilaViewModel { Clave = s.Id.ToString(), Nombre = s.Descripcion, Estatus = s.Estatus }).ToListAsync();
+                var sexos = await _db.Sexos.Query.OrderBy(s => s.Descripcion)
+                    .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina).ToListAsync();
+                model.Elementos = sexos.Select(s => new CatalogoFilaViewModel
+                    { Clave = s.Id.ToString(), Nombre = s.Descripcion, Estatus = s.Estatus }).ToList();
                 if (elemento is null && !string.IsNullOrWhiteSpace(editar) && char.TryParse(editar, out var claveSexo))
                 {
-                    var item = await _db.Sexos.AsNoTracking().FirstOrDefaultAsync(s => s.Id == claveSexo);
+                    var item = await _db.Sexos.FindAsync(claveSexo);
                     if (item is null) return model;
                     elemento = new CatalogoElementoViewModel { Clave = item.Id.ToString(), Nombre = item.Descripcion, Estatus = item.Estatus.ToLowerInvariant() };
                 }
                 break;
             case "estados":
-                model.Elementos = await _db.Estados.AsNoTracking().OrderBy(e => e.NombreEstado)
+                model.Elementos = await _db.Estados.Query.OrderBy(e => e.NombreEstado)
                     .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
                     .Select(e => new CatalogoFilaViewModel { Clave = e.Id.ToString(), Nombre = e.NombreEstado, Estatus = e.Estatus }).ToListAsync();
                 if (elemento is null && int.TryParse(editar, out var idEstado))
                 {
-                    var item = await _db.Estados.AsNoTracking().FirstOrDefaultAsync(e => e.Id == idEstado);
+                    var item = await _db.Estados.Query.FirstOrDefaultAsync(e => e.Id == idEstado);
                     if (item is null) return model;
                     elemento = new CatalogoElementoViewModel { Nombre = item.NombreEstado, Estatus = item.Estatus.ToLowerInvariant() };
                 }
@@ -902,22 +885,22 @@ public class AdminController : Controller
         switch (tipo)
         {
             case "categorias":
-                var categoriaDuplicada = await _db.Categorias.AnyAsync(c => c.Nombre == nombre && (!originalId.HasValue || c.Id != originalId.Value));
+                var categoriaDuplicada = await _db.Categorias.Query.AnyAsync(c => c.Nombre == nombre && (!originalId.HasValue || c.Id != originalId.Value));
                 return categoriaDuplicada;
             case "niveles":
-                var nivelDuplicado = await _db.Niveles.AnyAsync(n => n.Nombre == nombre && (!originalId.HasValue || n.Id != originalId.Value));
+                var nivelDuplicado = await _db.Niveles.Query.AnyAsync(n => n.Nombre == nombre && (!originalId.HasValue || n.Id != originalId.Value));
                 return nivelDuplicado;
             case "instructores":
-                var instructorDuplicado = await _db.Instructores.AnyAsync(i => i.Nombre == nombre && (!originalId.HasValue || i.Id != originalId.Value));
+                var instructorDuplicado = await _db.Instructores.Query.AnyAsync(i => i.Nombre == nombre && (!originalId.HasValue || i.Id != originalId.Value));
                 return instructorDuplicado;
             case "sexos":
                 if (string.IsNullOrWhiteSpace(clave)) return false;
-                var sexoDuplicado = await _db.Sexos.AnyAsync(s =>
-                    (s.Descripcion == nombre && (!originalSex.HasValue || s.Id != originalSex.Value)) ||
-                    (s.Id == clave.Trim().ToUpperInvariant()[0] && (!originalSex.HasValue || s.Id != originalSex.Value)));
-                return sexoDuplicado;
+                var codigo = clave.Trim().ToUpperInvariant()[0];
+                var sexos = await _db.Sexos.Query.ToListAsync();
+                return sexos.Any(s => s.Id != originalSex &&
+                    (s.Id == codigo || string.Equals(s.Descripcion, nombre, StringComparison.OrdinalIgnoreCase)));
             case "estados":
-                return await _db.Estados.AnyAsync(e => e.NombreEstado == nombre && (!originalId.HasValue || e.Id != originalId.Value));
+                return await _db.Estados.Query.AnyAsync(e => e.NombreEstado == nombre && (!originalId.HasValue || e.Id != originalId.Value));
             default:
                 return false;
         }

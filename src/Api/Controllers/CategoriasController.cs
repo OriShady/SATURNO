@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver.Linq;
 using NoSqlU.Data;
 using NoSqlU.Data.Entities;
 
@@ -9,11 +9,11 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class CategoriasController : ControllerBase
 {
-    private readonly NoSqlUContext _db;
-    public CategoriasController(NoSqlUContext db) => _db = db;
+    private readonly SaturnoStore _db;
+    public CategoriasController(SaturnoStore db) => _db = db;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _db.Categorias.ToListAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _db.Categorias.Query.ToListAsync());
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
@@ -27,8 +27,7 @@ public class CategoriasController : ControllerBase
     public async Task<IActionResult> Create([FromBody] Categoria model)
     {
         model.FechaCreacion = DateTime.UtcNow;
-        _db.Categorias.Add(model);
-        await _db.SaveChangesAsync();
+        await _db.Categorias.InsertAsync(model);
         return CreatedAtAction(nameof(Get), new { id = model.Id }, model);
     }
 
@@ -40,7 +39,7 @@ public class CategoriasController : ControllerBase
         existing.Nombre = model.Nombre;
         existing.Descripcion = model.Descripcion;
         existing.Estatus = model.Estatus;
-        await _db.SaveChangesAsync();
+        await _db.Categorias.ReplaceAsync(existing);
         return NoContent();
     }
 
@@ -49,9 +48,9 @@ public class CategoriasController : ControllerBase
     {
         var existing = await _db.Categorias.FindAsync(id);
         if (existing == null) return NotFound();
-        //_db.Categorias.Remove(existing);
+
         existing.Estatus = "inactivo";
-        await _db.SaveChangesAsync();
+        await _db.Categorias.ReplaceAsync(existing);
         return NoContent();
     }
 }

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using NoSqlU.Data;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
@@ -15,14 +15,11 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrWhiteSpace(connection))
-{
-    throw new InvalidOperationException(
-        "Falta ConnectionStrings:DefaultConnection. Configúrala mediante User Secrets o la variable de entorno ConnectionStrings__DefaultConnection.");
-}
-
-builder.Services.AddDbContext<NoSqlUContext>(options => options.UseSqlServer(connection));
+var mongoUri = builder.Configuration["MongoDB:ConnectionString"] ?? "mongodb://localhost:27017";
+var mongoDatabase = builder.Configuration["MongoDB:Database"] ?? "SaturnoMongo";
+builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoUri));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IMongoClient>().GetDatabase(mongoDatabase));
+builder.Services.AddSingleton<SaturnoStore>();
 
 var app = builder.Build();
 
@@ -35,6 +32,23 @@ if (app.Environment.IsDevelopment())
 
 // Apply CORS before HTTPS redirection so redirect responses include CORS headers
 app.UseCors("AllowAll");
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (MongoWriteException error) when (!context.Response.HasStarted &&
+        (error.WriteError.Category == ServerErrorCategory.DuplicateKey || error.WriteError.Code == 121))
+    {
+        var duplicado = error.WriteError.Category == ServerErrorCategory.DuplicateKey;
+        context.Response.StatusCode = duplicado ? StatusCodes.Status409Conflict : StatusCodes.Status400BadRequest;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = duplicado ? "Ya existe un registro con esos datos." : "Los datos no cumplen la validación de la base."
+        });
+    }
+});
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

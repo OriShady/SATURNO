@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver.Linq;
 using NoSqlU.Data;
 using NoSqlU.Data.Entities;
 using NoSqlU.Api.Models;
@@ -11,9 +11,9 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class CursosController : ControllerBase
 {
-    private readonly NoSqlUContext _db;
+    private readonly SaturnoStore _db;
 
-    public CursosController(NoSqlUContext db)
+    public CursosController(SaturnoStore db)
     {
         _db = db;
     }
@@ -21,7 +21,7 @@ public class CursosController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var cursos = await _db.Cursos
+        var cursos = (await _db.CargarCursosAsync())
             .Select(c => new
             {
                 c.Id,
@@ -36,14 +36,14 @@ public class CursosController : ControllerBase
                 Nivel = c.Nivel == null ? null : new { c.Nivel.Id, c.Nivel.Nombre },
                 Instructor = c.Instructor == null ? null : new { c.Instructor.Id, c.Instructor.Nombre, c.Instructor.Apellido }
             })
-            .ToListAsync();
+            .ToList();
         return Ok(cursos);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
     {
-        var curso = await _db.Cursos.Include(c => c.Categoria).Include(c => c.Nivel).Include(c => c.Instructor).FirstOrDefaultAsync(c => c.Id == id);
+        var curso = (await _db.CargarCursosAsync(id)).FirstOrDefault();
         if (curso == null) return NotFound();
         return Ok(curso);
     }
@@ -68,30 +68,30 @@ public class CursosController : ControllerBase
         if (precio <= 0) return BadRequest(new { ok = false, error = "El precio debe ser mayor a 0" });
         if (duracion <= 0) return BadRequest(new { ok = false, error = "La duración debe ser mayor a 0" });
 
-        var cat = await _db.Categorias.FirstOrDefaultAsync(c => c.Id == categoriaId && c.Estatus == "activo");
+        var cat = await _db.Categorias.Query.FirstOrDefaultAsync(c => c.Id == categoriaId && c.Estatus == "activo");
         if (cat == null) return NotFound(new { ok = false, error = "Categoría no existe o está inactiva" });
 
-        using var tx = await _db.Database.BeginTransactionAsync();
         try
         {
             int nivelId;
             if (dto.NivelId.HasValue)
             {
                 nivelId = dto.NivelId.Value;
+                if (await _db.Niveles.FindAsync(nivelId) is null) return BadRequest(new { error = "Nivel inexistente." });
             }
             else
             {
-                var existingNivel = await _db.Niveles.FirstOrDefaultAsync(n => n.Nombre.ToLower() == nivelNombre.ToLower());
+                var existingNivel = await _db.Niveles.Query.FirstOrDefaultAsync(n => n.Nombre.ToLower() == nivelNombre.ToLower());
                 if (existingNivel != null)
                 {
                     existingNivel.Estatus = "activo";
+                    await _db.Niveles.ReplaceAsync(existingNivel);
                     nivelId = existingNivel.Id;
                 }
                 else
                 {
                     var n = new Nivel { Nombre = nivelNombre, Estatus = "activo", FechaCreacion = DateTime.UtcNow };
-                    _db.Niveles.Add(n);
-                    await _db.SaveChangesAsync();
+                    await _db.Niveles.InsertAsync(n);
                     nivelId = n.Id;
                 }
             }
@@ -100,20 +100,21 @@ public class CursosController : ControllerBase
             if (dto.InstructorId.HasValue)
             {
                 instructorId = dto.InstructorId.Value;
+                if (await _db.Instructores.FindAsync(instructorId) is null) return BadRequest(new { error = "Instructor inexistente." });
             }
             else
             {
-                var existingInst = await _db.Instructores.FirstOrDefaultAsync(i => i.Nombre.ToLower() == instructorNombre.ToLower());
+                var existingInst = await _db.Instructores.Query.FirstOrDefaultAsync(i => i.Nombre.ToLower() == instructorNombre.ToLower());
                 if (existingInst != null)
                 {
                     existingInst.Estatus = "activo";
+                    await _db.Instructores.ReplaceAsync(existingInst);
                     instructorId = existingInst.Id;
                 }
                 else
                 {
                     var ins = new Instructor { Nombre = instructorNombre, Apellido = string.Empty, Email = string.Empty, Estatus = "activo", FechaCreacion = DateTime.UtcNow };
-                    _db.Instructores.Add(ins);
-                    await _db.SaveChangesAsync();
+                    await _db.Instructores.InsertAsync(ins);
                     instructorId = ins.Id;
                 }
             }
@@ -132,15 +133,12 @@ public class CursosController : ControllerBase
                 FechaCreacion = DateTime.UtcNow
             };
 
-            _db.Cursos.Add(curso);
-            await _db.SaveChangesAsync();
-            await tx.CommitAsync();
+            await _db.Cursos.InsertAsync(curso);
 
             return CreatedAtAction(nameof(Get), new { id = curso.Id }, new { ok = true, inserted_id = curso.Id.ToString() });
         }
         catch (Exception e)
         {
-            await tx.RollbackAsync();
             return BadRequest(new { ok = false, error = "No se pudo crear el curso", detalle = e.Message });
         }
     }
@@ -155,7 +153,7 @@ public class CursosController : ControllerBase
         var existing = await _db.Cursos.FindAsync(id);
         if (existing == null) return NotFound();
         existing.Estatus = estatus;
-        await _db.SaveChangesAsync();
+        await _db.Cursos.ReplaceAsync(existing);
         return Ok(new { ok = true, message = "Curso actualizado" });
     }
 
@@ -165,7 +163,7 @@ public class CursosController : ControllerBase
         var existing = await _db.Cursos.FindAsync(id);
         if (existing == null) return NotFound();
         existing.Estatus = "inactivo";
-        await _db.SaveChangesAsync();
+        await _db.Cursos.ReplaceAsync(existing);
         return Ok(new { ok = true, message = "Curso desactivado" });
     }
 }
