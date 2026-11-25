@@ -9,10 +9,12 @@ public sealed class SaturnoStore
 {
     private readonly IMongoDatabase _database;
     private readonly IMongoCollection<Usuario> _empleados;
+    private readonly IMongoCollection<Administrador> _administradores;
 
     public SaturnoStore(IMongoDatabase database)
     {
         _database = database;
+        _administradores = database.GetCollection<Administrador>("administradores");
         _empleados = database.GetCollection<Usuario>("empleados");
         Usuarios = new MongoCatalog<Usuario, int>(_empleados, NextIdAsync);
         Categorias = Catalog<Categoria>("categorias");
@@ -30,6 +32,49 @@ public sealed class SaturnoStore
     public MongoCatalog<Curso, int> Cursos { get; }
     public MongoCatalog<Estado, int> Estados { get; }
     public MongoCatalog<Sexo, char> Sexos { get; }
+
+    public async Task<Administrador?> BuscarAdministradorAsync(string usuario) =>
+        await _administradores.Find(a => a.Usuario == usuario && a.Estatus == "ACTIVO").FirstOrDefaultAsync();
+
+    public Task CrearAdministradorInicialAsync(Administrador administrador) =>
+        _administradores.UpdateOneAsync(a => a.Usuario == administrador.Usuario,
+            Builders<Administrador>.Update
+                .SetOnInsert(a => a.PasswordHash, administrador.PasswordHash)
+                .SetOnInsert(a => a.Estatus, administrador.Estatus),
+            new UpdateOptions { IsUpsert = true });
+
+    public async Task<bool> EliminarEmpleadoInactivoAsync(int id)
+    {
+        var result = await _empleados.DeleteOneAsync(u => u.Id == id && u.Estatus == "INACTIVO");
+        return result.DeletedCount == 1;
+    }
+
+    public async Task<bool> SexoEnUsoAsync(char sexo)
+    {
+        FilterDefinition<Usuario> filtro = new BsonDocument("id_sexo", sexo.ToString());
+        return await _empleados.Find(filtro).AnyAsync();
+    }
+
+    public Task<bool> EstadoEnUsoAsync(int id) =>
+        Usuarios.Query.AnyAsync(u => u.Direcciones.Any(d => d.EstadoId == id));
+
+    public IQueryable<Usuario> FiltrarEmpleados(string? nombre, int? numero, string? estatus)
+    {
+        var query = Usuarios.Query;
+        if (numero is int id) query = query.Where(u => u.Id == id);
+        if (estatus is not null) query = query.Where(u => u.Estatus == estatus);
+        if (!string.IsNullOrWhiteSpace(nombre))
+        {
+            foreach (var palabra in nombre.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var texto = palabra.ToLowerInvariant();
+                query = query.Where(u => u.Nombres.ToLower().Contains(texto) ||
+                    (u.ApellidoPaterno != null && u.ApellidoPaterno.ToLower().Contains(texto)) ||
+                    (u.ApellidoMaterno != null && u.ApellidoMaterno.ToLower().Contains(texto)));
+            }
+        }
+        return query;
+    }
 
     private MongoCatalog<T, int> Catalog<T>(string nombre) =>
         new(_database.GetCollection<T>(nombre), NextIdAsync);
@@ -70,6 +115,7 @@ public sealed class SaturnoStore
     public Task EditarEmpleadoAsync(Usuario usuario) =>
         _empleados.UpdateOneAsync(u => u.Id == usuario.Id, Builders<Usuario>.Update
             .Set(u => u.Nombres, usuario.Nombres)
+            .Set(u => u.Estatus, usuario.Estatus)
             .Set(u => u.ApellidoPaterno, usuario.ApellidoPaterno)
             .Set(u => u.ApellidoMaterno, usuario.ApellidoMaterno)
             .Set(u => u.FechaNacimiento, usuario.FechaNacimiento)

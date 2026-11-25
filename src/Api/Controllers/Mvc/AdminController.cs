@@ -185,108 +185,31 @@ public class AdminController : Controller
     public IActionResult Usuarios() => RedirectToAction(nameof(Empleados));
 
     [HttpGet]
-    public async Task<IActionResult> Empleados(string? q, string? estatus, int pagina = 1)
+    public async Task<IActionResult> Empleados(string? q, string? estatus, int pagina = 1, int? numero = null)
     {
-        if (!string.IsNullOrWhiteSpace(estatus) && estatus != "ACTIVO" && estatus != "INACTIVO")
-            return BadRequest("El filtro de estatus debe ser ACTIVO o INACTIVO.");
-        return View(await BuildEmpleadosViewModelAsync(q, estatus, pagina));
+        if (estatus is not (null or "ACTIVO" or "INACTIVO") || numero is <= 0)
+            return BadRequest("Revisa el número de empleado y el estatus.");
+        return View(await BuildEmpleadosViewModelAsync(q, estatus, pagina, numero));
     }
 
     [HttpGet]
-    public async Task<IActionResult> BuscarEmpleados(string? q, string? estatus, int pagina = 1)
-    {
-        if (!string.IsNullOrWhiteSpace(estatus) && estatus != "ACTIVO" && estatus != "INACTIVO")
-            return BadRequest("El filtro de estatus debe ser ACTIVO o INACTIVO.");
-
-        var model = await BuildEmpleadosViewModelAsync(q, estatus, pagina);
-        return Json(new
-        {
-            employees = model.Empleados.Select(u => new
-            {
-                id = u.Id,
-                name = $"{u.Nombres} {u.ApellidoPaterno} {u.ApellidoMaterno}".Trim(),
-                email = u.CorreoEmpresarial,
-                status = u.Estatus,
-                joinDate = u.FechaRegistro.ToString("d")
-            }),
-            model.Pagina,
-            model.TotalPaginas,
-            model.TotalEmpleados
-        });
-    }
+    public async Task<IActionResult> RegistrarEmpleado() => View("FormularioEmpleado", await BuildEmpleadoFormViewModelAsync());
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RegistrarEmpleado(
-        [Bind(Prefix = "NuevoEmpleado")] EmpleadoFormViewModel model,
-        string? q,
-        string? estatusActual,
-        int pagina = 1)
+    public async Task<IActionResult> RegistrarEmpleado(EmpleadoFormViewModel model)
     {
-        if (model.Cursos.Count == 0)
-            ModelState.AddModelError("NuevoEmpleado.Cursos", "Registra al menos un curso del certificado.");
-
-        if (await _db.Usuarios.Query.AnyAsync(u => u.CorreoEmpresarial == model.CorreoEmpresarial.Trim()))
-            ModelState.AddModelError("NuevoEmpleado.CorreoEmpresarial", "El correo empresarial ya está registrado.");
-
-        var sexoValido = model.SexoId is char codigoSexo &&
-            (await _db.Sexos.FindAsync(codigoSexo))?.Estatus == "ACTIVO";
-        if (!sexoValido)
-            ModelState.AddModelError("NuevoEmpleado.SexoId", "Selecciona un sexo activo.");
-
-        if (!await _db.Estados.Query.AnyAsync(e => e.Id == model.EstadoId && e.Estatus == "ACTIVO"))
-            ModelState.AddModelError("NuevoEmpleado.EstadoId", "Selecciona un estado activo.");
-
-        if (model.Cursos.Any(c => c.Estatus != "COMPLETADO" && c.Estatus != "EN CURSO"))
-            ModelState.AddModelError("NuevoEmpleado.Cursos", "El estatus de cada curso debe ser válido.");
-        for (var i = 0; i < model.Cursos.Count; i++)
-        {
-            if (model.Cursos[i].Estatus == "COMPLETADO" && !model.Cursos[i].FechaFinalizacion.HasValue)
-                ModelState.AddModelError($"NuevoEmpleado.Cursos[{i}].FechaFinalizacion", "Indica la fecha de finalización del curso.");
-        }
-
+        model.Id = 0;
+        ModelState.Remove(nameof(model.Id));
+        await ValidarEmpleadoAsync(model);
         if (!ModelState.IsValid)
-        {
-            var viewModel = await BuildEmpleadosViewModelAsync(q, estatusActual, pagina, model, mostrarFormulario: true);
-            return View("Empleados", viewModel);
-        }
+            return View("FormularioEmpleado", await BuildEmpleadoFormViewModelAsync(model));
 
-        var usuario = new Usuario
-        {
-            Nombres = model.Nombres.Trim(),
-            ApellidoPaterno = model.ApellidoPaterno.Trim(),
-            ApellidoMaterno = model.ApellidoMaterno?.Trim(),
-            FechaNacimiento = model.FechaNacimiento!.Value,
-            SexoId = model.SexoId!.Value,
-            CorreoEmpresarial = model.CorreoEmpresarial.Trim(),
-            Telefono = model.Telefono?.Trim(),
-            FechaRegistro = model.FechaIngreso!.Value,
-            Estatus = "ACTIVO",
-            Direcciones = new List<DireccionUsuario>
-            {
-                new()
-                {
-                    EstadoId = model.EstadoId,
-                    Calle = model.Calle.Trim(),
-                    NumeroExterior = model.NumeroExterior.Trim(),
-                    NumeroInterior = model.NumeroInterior?.Trim(),
-                    CodigoPostal = model.CodigoPostal.Trim(),
-                    Colonia = model.Colonia.Trim(),
-                    Municipio = model.Municipio.Trim()
-                }
-            },
-            CursosUsuarios = model.Cursos.Select(c => new CursoUsuario
-            {
-                NombreCurso = c.NombreCurso.Trim(),
-                Institucion = c.Institucion.Trim(),
-                FechaFinalizacion = c.FechaFinalizacion,
-                Estatus = c.Estatus
-            }).ToList()
-        };
-
+        var usuario = new Usuario { Estatus = "ACTIVO" };
+        AplicarFormulario(usuario, model);
         await _db.Usuarios.InsertAsync(usuario);
         TempData["Mensaje"] = $"Empleado registrado correctamente (No. {usuario.Id}).";
-        return RedirectToAction(nameof(Empleados));
+        return RedirectToAction(nameof(Empleados), new { numero = usuario.Id });
     }
 
     [HttpGet]
@@ -300,6 +223,7 @@ public class AdminController : Controller
         var model = new EmpleadoFormViewModel
         {
             Id = usuario.Id,
+            Estatus = usuario.Estatus,
             Nombres = usuario.Nombres,
             ApellidoPaterno = usuario.ApellidoPaterno ?? string.Empty,
             ApellidoMaterno = usuario.ApellidoMaterno,
@@ -313,20 +237,16 @@ public class AdminController : Controller
             NumeroExterior = direccion?.NumeroExterior ?? string.Empty,
             NumeroInterior = direccion?.NumeroInterior,
             CodigoPostal = direccion?.CodigoPostal ?? string.Empty,
-            Colonia = direccion?.Colonia ?? string.Empty,
-            Municipio = direccion?.Municipio ?? string.Empty,
-            Cursos = usuario.CursosUsuarios.Select(c => new CursoEmpleadoFormViewModel
+            Cursos = usuario.CursosUsuarios.Select((c, indice) => new CursoEmpleadoFormViewModel
             {
                 NombreCurso = c.NombreCurso,
-                Institucion = c.Institucion ?? string.Empty,
-                FechaFinalizacion = c.FechaFinalizacion,
-                Estatus = c.Estatus
-            }).ToList(),
-            Estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync(),
-            Sexos = (await _db.Sexos.Query.OrderBy(s => s.Descripcion).ToListAsync())
-                .Where(s => s.Estatus == "ACTIVO" || s.Id == usuario.SexoId).ToList()
+                DuracionMinutos = c.DuracionMinutos,
+                FechaInicio = c.FechaInicio,
+                FechaEntregaConstancia = c.FechaEntregaConstancia ?? c.FechaFinalizacion,
+                IndiceOriginal = indice
+            }).ToList()
         };
-        return View(model);
+        return View("FormularioEmpleado", await BuildEmpleadoFormViewModelAsync(model));
     }
 
     [HttpPost]
@@ -337,36 +257,72 @@ public class AdminController : Controller
             .FirstOrDefaultAsync(u => u.Id == model.Id);
         if (usuario is null) return NotFound();
 
-        if (model.Cursos.Count == 0)
-            ModelState.AddModelError(nameof(model.Cursos), "Registra al menos un curso del certificado.");
-        if (model.Cursos.Any(c => c.Estatus != "COMPLETADO" && c.Estatus != "EN CURSO"))
-            ModelState.AddModelError(nameof(model.Cursos), "El estatus de cada curso debe ser válido.");
+        await ValidarEmpleadoAsync(model, usuario);
+        if (!ModelState.IsValid)
+            return View("FormularioEmpleado", await BuildEmpleadoFormViewModelAsync(model));
+
+        AplicarFormulario(usuario, model);
+        usuario.Estatus = model.Estatus;
+        await _db.EditarEmpleadoAsync(usuario);
+        TempData["Mensaje"] = "Datos del empleado actualizados correctamente.";
+        return RedirectToAction(nameof(Empleados), new { numero = usuario.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EliminarEmpleado(int id)
+    {
+        if (!await _db.EliminarEmpleadoInactivoAsync(id))
+            return Conflict("Solo se puede eliminar definitivamente a un empleado inactivo.");
+        TempData["Mensaje"] = "El empleado se eliminó definitivamente.";
+        return RedirectToAction(nameof(Empleados));
+    }
+
+    private async Task ValidarEmpleadoAsync(EmpleadoFormViewModel model, Usuario? existente = null)
+    {
+        var correo = model.CorreoEmpresarial?.Trim();
+        if (await _db.Usuarios.Query.AnyAsync(u => u.Id != model.Id && u.CorreoEmpresarial == correo))
+            ModelState.AddModelError(nameof(model.CorreoEmpresarial), "El correo institucional ya está registrado.");
+        if (model.SexoId is not char codigo || (await _db.Sexos.FindAsync(codigo)) is not { } sexo ||
+            (sexo.Estatus != "ACTIVO" && existente?.SexoId != codigo))
+            ModelState.AddModelError(nameof(model.SexoId), "Selecciona un sexo activo.");
+        var estado = await _db.Estados.FindAsync(model.EstadoId);
+        if (estado is null || (estado.Estatus != "ACTIVO" && existente?.Direcciones.FirstOrDefault()?.EstadoId != model.EstadoId))
+            ModelState.AddModelError(nameof(model.EstadoId), "Selecciona un estado activo.");
+        var anteriores = existente?.CursosUsuarios.ToArray() ?? Array.Empty<CursoUsuario>();
+        var indices = new HashSet<int>();
         for (var i = 0; i < model.Cursos.Count; i++)
         {
-            if (model.Cursos[i].Estatus == "COMPLETADO" && !model.Cursos[i].FechaFinalizacion.HasValue)
-                ModelState.AddModelError($"Cursos[{i}].FechaFinalizacion", "Indica la fecha de finalización del curso.");
+            var curso = model.Cursos[i];
+            var anterior = CursoOriginal(curso, anteriores);
+            if (curso.IndiceOriginal is int indice && (anterior is null || !indices.Add(indice)))
+                ModelState.AddModelError(nameof(model.Cursos), "Vuelve a abrir el empleado para revisar sus cursos.");
+            if (anterior is not null && CursoSinCambios(curso, anterior)) continue;
+            if (curso.DuracionMinutos is null)
+                ModelState.AddModelError($"Cursos[{i}].DuracionMinutos", "Indica la duración del curso.");
+            if (curso.FechaInicio is null && curso.FechaEntregaConstancia is null)
+                ModelState.AddModelError($"Cursos[{i}].FechaInicio", "Indica la fecha de inicio o de entrega de constancia de cada curso.");
+            if (curso.FechaInicio > curso.FechaEntregaConstancia)
+                ModelState.AddModelError($"Cursos[{i}].FechaEntregaConstancia", "La entrega de constancia no puede ser anterior al inicio.");
         }
+    }
 
-        if (await _db.Usuarios.Query.AnyAsync(u => u.Id != model.Id && u.CorreoEmpresarial == model.CorreoEmpresarial.Trim()))
-            ModelState.AddModelError(nameof(model.CorreoEmpresarial), "El correo empresarial ya está registrado.");
-        if (model.SexoId is not char codigoSexo || (await _db.Sexos.FindAsync(codigoSexo))?.Estatus != "ACTIVO")
-            ModelState.AddModelError(nameof(model.SexoId), "Selecciona un sexo activo.");
-        if (!await _db.Estados.Query.AnyAsync(e => e.Id == model.EstadoId && e.Estatus == "ACTIVO"))
-            ModelState.AddModelError(nameof(model.EstadoId), "Selecciona un estado activo.");
+    private static CursoUsuario? CursoOriginal(CursoEmpleadoFormViewModel curso, CursoUsuario[] anteriores) =>
+        curso.IndiceOriginal is int i && i >= 0 && i < anteriores.Length ? anteriores[i] : null;
 
-        if (!ModelState.IsValid)
-        {
-            model.Estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
-            model.Sexos = await _db.Sexos.Query.Where(s => s.Estatus == "ACTIVO").OrderBy(s => s.Descripcion).ToListAsync();
-            return View(model);
-        }
+    private static bool CursoSinCambios(CursoEmpleadoFormViewModel curso, CursoUsuario anterior) =>
+        anterior.NombreCurso == curso.NombreCurso?.Trim() && anterior.DuracionMinutos == curso.DuracionMinutos &&
+        anterior.FechaInicio?.Date == curso.FechaInicio &&
+        (anterior.FechaEntregaConstancia ?? anterior.FechaFinalizacion)?.Date == curso.FechaEntregaConstancia;
 
+    private static void AplicarFormulario(Usuario usuario, EmpleadoFormViewModel model)
+    {
         usuario.Nombres = model.Nombres.Trim();
         usuario.ApellidoPaterno = model.ApellidoPaterno.Trim();
         usuario.ApellidoMaterno = model.ApellidoMaterno?.Trim();
         usuario.FechaNacimiento = model.FechaNacimiento!.Value;
         usuario.FechaRegistro = model.FechaIngreso!.Value;
-        usuario.SexoId = model.SexoId.GetValueOrDefault();
+        usuario.SexoId = model.SexoId!.Value;
         usuario.CorreoEmpresarial = model.CorreoEmpresarial.Trim();
         usuario.Telefono = model.Telefono?.Trim();
 
@@ -381,37 +337,28 @@ public class AdminController : Controller
         direccion.NumeroExterior = model.NumeroExterior.Trim();
         direccion.NumeroInterior = model.NumeroInterior?.Trim();
         direccion.CodigoPostal = model.CodigoPostal.Trim();
-        direccion.Colonia = model.Colonia.Trim();
-        direccion.Municipio = model.Municipio.Trim();
 
-        usuario.CursosUsuarios = model.Cursos.Select(c => new CursoUsuario
+        var anteriores = usuario.CursosUsuarios.ToArray();
+        usuario.CursosUsuarios = model.Cursos.Select(c =>
         {
-            NombreCurso = c.NombreCurso.Trim(),
-            Institucion = c.Institucion.Trim(),
-            FechaFinalizacion = c.FechaFinalizacion,
-            Estatus = c.Estatus
+            var anterior = CursoOriginal(c, anteriores);
+            if (anterior is not null && CursoSinCambios(c, anterior)) return anterior;
+            return new CursoUsuario
+            {
+                CursoId = anterior?.CursoId,
+                Institucion = anterior?.Institucion,
+                NombreCurso = c.NombreCurso.Trim(),
+                DuracionMinutos = c.DuracionMinutos,
+                FechaInicio = c.FechaInicio,
+                FechaEntregaConstancia = c.FechaEntregaConstancia,
+                FechaFinalizacion = c.FechaEntregaConstancia,
+                Estatus = c.FechaEntregaConstancia.HasValue ? "COMPLETADO" : "EN CURSO"
+            };
         }).ToList();
-
-        await _db.EditarEmpleadoAsync(usuario);
-        TempData["Mensaje"] = "Datos del empleado actualizados correctamente.";
-        return RedirectToAction(nameof(Empleados));
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EliminarEmpleado(int id, string? q, string? filtroEstatus, int pagina = 1)
-    {
-        var usuario = await _db.Usuarios.Query
-            .FirstOrDefaultAsync(u => u.Id == id);
-        if (usuario is null) return NotFound();
-
-        await _db.Usuarios.DeleteAsync(id);
-        TempData["Mensaje"] = "El empleado y sus datos relacionados se eliminaron permanentemente.";
-        return RedirectToAction(nameof(Empleados), new { q, estatus = filtroEstatus, pagina });
     }
 
     [HttpGet]
-    public async Task<IActionResult> Catalogos(string tipo = "categorias", string? editar = null, int pagina = 1)
+    public async Task<IActionResult> Catalogos(string tipo = "sexos", string? editar = null, int pagina = 1)
     {
         tipo = tipo.ToLowerInvariant();
         if (!EsTipoCatalogoValido(tipo)) return NotFound();
@@ -436,8 +383,6 @@ public class AdminController : Controller
         if (tipo == "sexos" &&
             (string.IsNullOrWhiteSpace(elemento.Clave) || elemento.Clave.Trim().Length != 1))
             ModelState.AddModelError("Elemento.Clave", "La clave del sexo debe ser un solo carácter.");
-        if (tipo == "instructores" && elemento.Descripcion?.Length > 150)
-            ModelState.AddModelError("Elemento.Descripcion", "El correo no puede superar 150 caracteres.");
 
         if (ModelState.IsValid)
         {
@@ -450,41 +395,8 @@ public class AdminController : Controller
             return View("Catalogos", await BuildCatalogosViewModelAsync(tipo, claveOriginal, elemento, mostrarFormulario: true, pagina: pagina));
 
         var editar = !string.IsNullOrWhiteSpace(claveOriginal);
-        var estatus = elemento.Estatus == "inactivo" ? "inactivo" : "activo";
         switch (tipo)
         {
-            case "categorias":
-                var categoria = editar
-                    ? await _db.Categorias.Query.FirstOrDefaultAsync(c => c.Id == int.Parse(claveOriginal!))
-                    : new Categoria { FechaCreacion = DateTime.UtcNow };
-                if (categoria is null) return NotFound();
-                categoria.Nombre = elemento.Nombre.Trim();
-                categoria.Descripcion = elemento.Descripcion?.Trim();
-                categoria.Estatus = estatus;
-                if (editar) await _db.Categorias.ReplaceAsync(categoria);
-                else await _db.Categorias.InsertAsync(categoria);
-                break;
-            case "niveles":
-                var nivel = editar
-                    ? await _db.Niveles.Query.FirstOrDefaultAsync(n => n.Id == int.Parse(claveOriginal!))
-                    : new Nivel { FechaCreacion = DateTime.UtcNow };
-                if (nivel is null) return NotFound();
-                nivel.Nombre = elemento.Nombre.Trim();
-                nivel.Estatus = estatus;
-                if (editar) await _db.Niveles.ReplaceAsync(nivel);
-                else await _db.Niveles.InsertAsync(nivel);
-                break;
-            case "instructores":
-                var instructor = editar
-                    ? await _db.Instructores.Query.FirstOrDefaultAsync(i => i.Id == int.Parse(claveOriginal!))
-                    : new Instructor { FechaCreacion = DateTime.UtcNow, Apellido = string.Empty };
-                if (instructor is null) return NotFound();
-                instructor.Nombre = elemento.Nombre.Trim();
-                instructor.Email = elemento.Descripcion?.Trim();
-                instructor.Estatus = estatus;
-                if (editar) await _db.Instructores.ReplaceAsync(instructor);
-                else await _db.Instructores.InsertAsync(instructor);
-                break;
             case "sexos":
                 var claveSexo = elemento.Clave!.Trim().ToUpperInvariant()[0];
                 var sexo = editar
@@ -497,7 +409,7 @@ public class AdminController : Controller
                     return View("Catalogos", await BuildCatalogosViewModelAsync(tipo, claveOriginal, elemento, mostrarFormulario: true, pagina: pagina));
                 }
                 sexo.Descripcion = elemento.Nombre.Trim();
-                sexo.Estatus = estatus.ToUpperInvariant();
+
                 if (editar) await _db.Sexos.ReplaceAsync(sexo);
                 else await _db.Sexos.InsertAsync(sexo);
                 break;
@@ -507,7 +419,7 @@ public class AdminController : Controller
                     : new Estado();
                 if (estado is null) return NotFound();
                 estado.NombreEstado = elemento.Nombre.Trim();
-                estado.Estatus = estatus.ToUpperInvariant();
+
                 if (editar) await _db.Estados.ReplaceAsync(estado);
                 else await _db.Estados.InsertAsync(estado);
                 break;
@@ -528,33 +440,19 @@ public class AdminController : Controller
             return BadRequest();
         switch (tipo)
         {
-            case "categorias":
-                var categoria = await _db.Categorias.FindAsync(int.Parse(clave));
-                if (categoria is null) return NotFound();
-                categoria.Estatus = categoria.Estatus == "activo" ? "inactivo" : "activo";
-                await _db.Categorias.ReplaceAsync(categoria);
-                break;
-            case "niveles":
-                var nivel = await _db.Niveles.FindAsync(int.Parse(clave));
-                if (nivel is null) return NotFound();
-                nivel.Estatus = nivel.Estatus == "activo" ? "inactivo" : "activo";
-                await _db.Niveles.ReplaceAsync(nivel);
-                break;
-            case "instructores":
-                var instructor = await _db.Instructores.FindAsync(int.Parse(clave));
-                if (instructor is null) return NotFound();
-                instructor.Estatus = instructor.Estatus == "activo" ? "inactivo" : "activo";
-                await _db.Instructores.ReplaceAsync(instructor);
-                break;
             case "sexos":
                 var sexo = await _db.Sexos.FindAsync(char.Parse(clave));
                 if (sexo is null) return NotFound();
+                if (sexo.Estatus == "ACTIVO" && await _db.SexoEnUsoAsync(sexo.Id))
+                    return Conflict("Este sexo está en uso.");
                 sexo.Estatus = sexo.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
                 await _db.Sexos.ReplaceAsync(sexo);
                 break;
             case "estados":
                 var estado = await _db.Estados.FindAsync(int.Parse(clave));
                 if (estado is null) return NotFound();
+                if (estado.Estatus == "ACTIVO" && await _db.EstadoEnUsoAsync(estado.Id))
+                    return Conflict("Este estado está en uso.");
                 estado.Estatus = estado.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
                 await _db.Estados.ReplaceAsync(estado);
                 break;
@@ -629,14 +527,15 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarUsuarioEstatus(int id, string? q, string? filtroEstatus, int pagina = 1)
+    public async Task<IActionResult> CambiarUsuarioEstatus(int id)
     {
         var usuario = await _db.Usuarios.FindAsync(id);
         if (usuario is null) return NotFound();
 
-        usuario.Estatus = usuario.Estatus == "ACTIVO" ? "INACTIVO" : "ACTIVO";
+        usuario.Estatus = "INACTIVO";
         await _db.CambiarEstatusEmpleadoAsync(usuario);
-        return RedirectToAction(nameof(Empleados), new { q, estatus = filtroEstatus, pagina });
+        TempData["Mensaje"] = "Empleado dado de baja.";
+        return RedirectToAction(nameof(Empleados), new { numero = id });
     }
 
     [HttpGet]
@@ -657,7 +556,8 @@ public class AdminController : Controller
 
         if (!ModelState.IsValid)
             return View(await BuildAsignarCursoViewModelAsync(usuario.Id, usuario.Nombres, usuario.CorreoEmpresarial, model.CursoId));
-        if (!await _db.Cursos.Query.AnyAsync(c => c.Id == model.CursoId && c.Estatus == "activo"))
+        var curso = await _db.Cursos.FindAsync(model.CursoId);
+        if (curso?.Estatus != "activo")
         {
             ModelState.AddModelError(nameof(model.CursoId), "El curso seleccionado no existe o está inactivo.");
             return View(await BuildAsignarCursoViewModelAsync(usuario.Id, usuario.Nombres, usuario.CorreoEmpresarial, model.CursoId));
@@ -671,7 +571,8 @@ public class AdminController : Controller
         if (!await _db.AsignarCursoAsync(model.UsuarioId, new CursoUsuario
         {
             CursoId = model.CursoId,
-            NombreCurso = await _db.Cursos.Query.Where(c => c.Id == model.CursoId).Select(c => c.Nombre).FirstAsync(),
+            NombreCurso = curso.Nombre,
+            DuracionMinutos = curso.DuracionMinutos,
             FechaInicio = DateTime.UtcNow,
             Estatus = "EN CURSO"
         }))
@@ -719,64 +620,29 @@ public class AdminController : Controller
         };
     }
 
-    private async Task<EmpleadosViewModel> BuildEmpleadosViewModelAsync(
-        string? q,
-        string? estatus,
-        int pagina,
-        EmpleadoFormViewModel? nuevo = null,
-        bool mostrarFormulario = false)
+    private async Task<EmpleadosViewModel> BuildEmpleadosViewModelAsync(string? q, string? estatus, int pagina, int? numero)
     {
+        var model = new EmpleadosViewModel { Q = q, Numero = numero, Estatus = estatus };
+        if (string.IsNullOrWhiteSpace(q) && estatus is null && numero is null) return model;
+
+        model.BusquedaAplicada = true;
         const int tamanoPagina = 8;
-        var query = _db.Usuarios.Query.AsQueryable();
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var busqueda = q.Trim();
-            var numeroEmpleado = int.TryParse(busqueda, out var idBuscado) ? idBuscado : (int?)null;
-            query = query.Where(u =>
-                u.Nombres.Contains(busqueda) ||
-                (u.ApellidoPaterno != null && u.ApellidoPaterno.Contains(busqueda)) ||
-                (u.ApellidoMaterno != null && u.ApellidoMaterno.Contains(busqueda)) ||
-                u.CorreoEmpresarial.Contains(busqueda) ||
-                (numeroEmpleado.HasValue && u.Id == numeroEmpleado.Value));
-        }
-        if (estatus == "ACTIVO" || estatus == "INACTIVO")
-            query = query.Where(u => u.Estatus == estatus);
-
-        var totalEmpleados = await query.CountAsync();
-        var totalPaginas = Math.Max(1, (int)Math.Ceiling(totalEmpleados / (double)tamanoPagina));
-        pagina = Math.Clamp(pagina, 1, totalPaginas);
-        var empleados = await query
-            .OrderBy(u => u.Id)
-            .Skip((pagina - 1) * tamanoPagina)
-            .Take(tamanoPagina)
-            .ToListAsync();
-
-        return new EmpleadosViewModel
-        {
-            Q = q,
-            Estatus = estatus,
-            Pagina = pagina,
-            TotalPaginas = totalPaginas,
-            TotalEmpleados = totalEmpleados,
-            Empleados = empleados,
-            NuevoEmpleado = await BuildEmpleadoFormViewModelAsync(nuevo),
-            MostrarFormulario = mostrarFormulario
-        };
+        var query = _db.FiltrarEmpleados(q, numero, estatus);
+        model.TotalEmpleados = await query.CountAsync();
+        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling((double)model.TotalEmpleados / tamanoPagina));
+        model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
+        model.Empleados = await query.OrderBy(u => u.Id).Skip((model.Pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina).ToListAsync();
+        return model;
     }
 
     private async Task<EmpleadoFormViewModel> BuildEmpleadoFormViewModelAsync(EmpleadoFormViewModel? model = null)
     {
         model ??= new EmpleadoFormViewModel();
-        if (model.Cursos.Count == 0)
-            model.Cursos.Add(new CursoEmpleadoFormViewModel());
-        model.Estados = await _db.Estados.Query
-            .Where(e => e.Estatus == "ACTIVO")
-            .OrderBy(e => e.NombreEstado)
-            .ToListAsync();
-        model.Sexos = await _db.Sexos.Query
-            .Where(s => s.Estatus == "ACTIVO")
-            .OrderBy(s => s.Descripcion)
-            .ToListAsync();
+        model.Estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO" || e.Id == model.EstadoId)
+            .OrderBy(e => e.NombreEstado).ToListAsync();
+        model.Sexos = (await _db.Sexos.Query.OrderBy(s => s.Descripcion).ToListAsync())
+            .Where(s => s.Estatus == "ACTIVO" || s.Id == model.SexoId).ToList();
         return model;
     }
 
@@ -797,15 +663,6 @@ public class AdminController : Controller
         };
         switch (tipo)
         {
-            case "categorias":
-                model.TotalElementos = await _db.Categorias.Query.CountAsync();
-                break;
-            case "niveles":
-                model.TotalElementos = await _db.Niveles.Query.CountAsync();
-                break;
-            case "instructores":
-                model.TotalElementos = await _db.Instructores.Query.CountAsync();
-                break;
             case "sexos":
                 model.TotalElementos = await _db.Sexos.Query.CountAsync();
                 break;
@@ -817,39 +674,6 @@ public class AdminController : Controller
         model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
         switch (tipo)
         {
-            case "categorias":
-                model.Elementos = await _db.Categorias.Query.OrderBy(c => c.Nombre)
-                    .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
-                    .Select(c => new CatalogoFilaViewModel { Clave = c.Id.ToString(), Nombre = c.Nombre, Descripcion = c.Descripcion, Estatus = c.Estatus }).ToListAsync();
-                if (elemento is null && int.TryParse(editar, out var idCategoria))
-                {
-                    var item = await _db.Categorias.Query.FirstOrDefaultAsync(c => c.Id == idCategoria);
-                    if (item is null) return model;
-                    elemento = new CatalogoElementoViewModel { Nombre = item.Nombre, Descripcion = item.Descripcion, Estatus = item.Estatus };
-                }
-                break;
-            case "niveles":
-                model.Elementos = await _db.Niveles.Query.OrderBy(n => n.Nombre)
-                    .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
-                    .Select(n => new CatalogoFilaViewModel { Clave = n.Id.ToString(), Nombre = n.Nombre, Estatus = n.Estatus }).ToListAsync();
-                if (elemento is null && int.TryParse(editar, out var idNivel))
-                {
-                    var item = await _db.Niveles.Query.FirstOrDefaultAsync(n => n.Id == idNivel);
-                    if (item is null) return model;
-                    elemento = new CatalogoElementoViewModel { Nombre = item.Nombre, Estatus = item.Estatus };
-                }
-                break;
-            case "instructores":
-                model.Elementos = await _db.Instructores.Query.OrderBy(i => i.Nombre)
-                    .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
-                    .Select(i => new CatalogoFilaViewModel { Clave = i.Id.ToString(), Nombre = i.Nombre, Descripcion = i.Email, Estatus = i.Estatus }).ToListAsync();
-                if (elemento is null && int.TryParse(editar, out var idInstructor))
-                {
-                    var item = await _db.Instructores.Query.FirstOrDefaultAsync(i => i.Id == idInstructor);
-                    if (item is null) return model;
-                    elemento = new CatalogoElementoViewModel { Nombre = item.Nombre, Descripcion = item.Email, Estatus = item.Estatus };
-                }
-                break;
             case "sexos":
                 var sexos = await _db.Sexos.Query.OrderBy(s => s.Descripcion)
                     .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina).ToListAsync();
@@ -874,6 +698,9 @@ public class AdminController : Controller
                 }
                 break;
         }
+        await Task.WhenAll(model.Elementos.Select(async item => item.EnUso = tipo == "sexos"
+            ? await _db.SexoEnUsoAsync(char.Parse(item.Clave))
+            : await _db.EstadoEnUsoAsync(int.Parse(item.Clave))));
         model.Elemento = elemento ?? new CatalogoElementoViewModel();
         return model;
     }
@@ -884,15 +711,6 @@ public class AdminController : Controller
         var originalSex = char.TryParse(claveOriginal, out var parsedSex) ? parsedSex : (char?)null;
         switch (tipo)
         {
-            case "categorias":
-                var categoriaDuplicada = await _db.Categorias.Query.AnyAsync(c => c.Nombre == nombre && (!originalId.HasValue || c.Id != originalId.Value));
-                return categoriaDuplicada;
-            case "niveles":
-                var nivelDuplicado = await _db.Niveles.Query.AnyAsync(n => n.Nombre == nombre && (!originalId.HasValue || n.Id != originalId.Value));
-                return nivelDuplicado;
-            case "instructores":
-                var instructorDuplicado = await _db.Instructores.Query.AnyAsync(i => i.Nombre == nombre && (!originalId.HasValue || i.Id != originalId.Value));
-                return instructorDuplicado;
             case "sexos":
                 if (string.IsNullOrWhiteSpace(clave)) return false;
                 var codigo = clave.Trim().ToUpperInvariant()[0];
@@ -907,5 +725,5 @@ public class AdminController : Controller
     }
 
     private static bool EsTipoCatalogoValido(string tipo) =>
-        tipo is "categorias" or "niveles" or "instructores" or "sexos" or "estados";
+        tipo is "sexos" or "estados";
 }

@@ -8,13 +8,15 @@ const estatus = { enum: ["ACTIVO", "INACTIVO"] };
 const estatusCurso = { enum: ["activo", "inactivo"] };
 const object = (required, properties) => ({ bsonType: "object", required, properties });
 
-const domicilio = object(["calle", "numero_exterior", "codigo_postal", "id_estado", "colonia", "municipio"], {
+const domicilio = object(["calle", "numero_exterior", "codigo_postal", "id_estado"], {
   calle: txt(150), numero_exterior: txt(20), numero_interior: optional(txt(20)),
-  codigo_postal: txt(10), id_estado: intId, colonia: txt(100), municipio: txt(100)
+  codigo_postal: txt(10), id_estado: intId, colonia: optional(txt(100)), municipio: optional(txt(100))
 });
 
 const certificado = object(["nombre_curso", "estatus"], {
   id_curso: { bsonType: ["int", "null"], minimum: 1 },
+  duracion_minutos: { bsonType: ["int", "null"], minimum: 1 },
+  fecha_entrega_constancia: { bsonType: ["date", "null"] },
   nombre_curso: txt(200), institucion: optional(txt(150)),
   fecha_inicio: { bsonType: ["date", "null"] },
   fecha_finalizacion: { bsonType: ["date", "null"] },
@@ -42,6 +44,7 @@ empleado.anyOf = ["apellido_paterno", "apellido_materno"].map(campo => ({
 
 const validators = {
   empleados: empleado,
+  administradores: object(["_id", "password_hash", "estatus"], { _id: txt(100), password_hash: txt(255), estatus }),
   sexos: object(["_id", "nombre", "estatus"], { _id: txt(1), nombre: txt(30), estatus }),
   estados: object(["_id", "nombre", "estatus"], { _id: intId, nombre: txt(100), estatus }),
   categorias: object(["_id", "nombre", "estatus"], {
@@ -83,6 +86,8 @@ db.empleados.createIndex({ "credencial.usuario": 1 }, {
 });
 db.empleados.createIndex({ estatus: 1, _id: 1 });
 db.empleados.createIndex({ "cursos.id_curso": 1 });
+db.empleados.createIndex({ id_sexo: 1 });
+db.empleados.createIndex({ "domicilios.id_estado": 1 });
 
 function seed(coleccion, documentos) {
   const items = db.getCollection(coleccion);

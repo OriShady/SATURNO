@@ -1,0 +1,147 @@
+@model EmpleadoFormViewModel
+@{
+    var editando = Model.Id != 0;
+    ViewData["Title"] = editando ? "Editar empleado" : "Nuevo empleado";
+    ViewData["Active"] = "Empleados";
+}
+<header class="header"><h1>@ViewData["Title"]</h1></header>
+<section class="card employee-edit-card">
+    <form asp-action="@(editando ? "EditarEmpleado" : "RegistrarEmpleado")" method="post" id="employee-form" data-editando="@(editando ? "true" : "false")">
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+        <nav class="employee-steps" aria-label="Secciones del empleado">
+            <button type="button" class="btn btn-secondary" data-step="0">@(editando ? "Datos" : "1. Datos")</button>
+            <button type="button" class="btn btn-secondary" data-step="1">@(editando ? "Domicilio" : "2. Domicilio")</button>
+            <button type="button" class="btn btn-secondary" data-step="2">@(editando ? "Cursos" : "3. Cursos")</button>
+        </nav>
+        <section data-panel class="edit-form-section">
+            <div class="employee-fields">
+                @if (editando)
+                {
+                    <div class="form-group"><label for="numero-empleado">Número de empleado</label><input id="numero-empleado" value="@Model.Id" readonly /></div>
+                }
+                <div class="form-group"><label asp-for="Nombres">Nombre</label><input asp-for="Nombres" required maxlength="100" /></div>
+                <div class="form-group"><label asp-for="ApellidoPaterno">Apellido paterno</label><input asp-for="ApellidoPaterno" required maxlength="50" /></div>
+                <div class="form-group"><label asp-for="ApellidoMaterno">Apellido materno</label><input asp-for="ApellidoMaterno" maxlength="50" /></div>
+                <div class="form-group"><label asp-for="FechaNacimiento">Fecha de nacimiento</label><input asp-for="FechaNacimiento" type="date" required /></div>
+                <div class="form-group"><label asp-for="FechaIngreso">Fecha de ingreso</label><input asp-for="FechaIngreso" type="date" required /></div>
+                <div class="form-group"><label asp-for="SexoId">Sexo</label><select asp-for="SexoId" required><option value="">Seleccionar</option>@foreach (var sexo in Model.Sexos) { <option value="@sexo.Id">@sexo.Descripcion</option> }</select></div>
+                <div class="form-group"><label asp-for="CorreoEmpresarial">Correo institucional</label><input asp-for="CorreoEmpresarial" type="email" required maxlength="150" /></div>
+                <div class="form-group"><label asp-for="Telefono">Celular</label><input asp-for="Telefono" type="tel" maxlength="20" /></div>
+                @if (editando)
+                {
+                    <div class="form-group"><label asp-for="Estatus">Estatus</label><select asp-for="Estatus"><option value="ACTIVO">Activo</option><option value="INACTIVO">Inactivo</option></select></div>
+                }
+            </div>
+        </section>
+        <section data-panel class="edit-form-section">
+            <div class="employee-fields">
+                <div class="form-group"><label asp-for="Calle">Calle</label><input asp-for="Calle" required maxlength="150" /></div>
+                <div class="form-group"><label asp-for="NumeroExterior">Número exterior</label><input asp-for="NumeroExterior" required maxlength="20" /></div>
+                <div class="form-group"><label asp-for="NumeroInterior">Número interior</label><input asp-for="NumeroInterior" maxlength="20" /></div>
+                <div class="form-group"><label asp-for="CodigoPostal">Código postal</label><input asp-for="CodigoPostal" required maxlength="10" /></div>
+                <div class="form-group"><label asp-for="EstadoId">Estado</label><select asp-for="EstadoId" required><option value="">Seleccionar</option>@foreach (var estado in Model.Estados) { <option value="@estado.Id">@estado.NombreEstado</option> }</select></div>
+            </div>
+        </section>
+        <section data-panel class="edit-form-section">
+            <div class="table-wrap">
+                <table class="data-table employee-course-table">
+                    <thead><tr><th>Curso</th><th>Duración (minutos)</th><th>Fecha de inicio</th><th>Entrega de constancia</th><th>Acciones</th></tr></thead>
+                    <tbody id="course-rows">
+                    @for (var i = 0; i < Model.Cursos.Count; i++)
+                    {
+                        <tr>
+                            <td><input asp-for="Cursos[i].IndiceOriginal" type="hidden" /><input asp-for="Cursos[i].NombreCurso" aria-label="Nombre del curso" maxlength="200" required /></td>
+                            <td><input asp-for="Cursos[i].DuracionMinutos" aria-label="Duración en minutos" type="number" min="1" required="@(Model.Cursos[i].IndiceOriginal is null)" /></td>
+                            <td><input asp-for="Cursos[i].FechaInicio" aria-label="Fecha de inicio" type="date" /></td>
+                            <td><input asp-for="Cursos[i].FechaEntregaConstancia" aria-label="Entrega de constancia" type="date" /></td>
+                            <td><button type="button" class="btn btn-secondary" data-quitar>Quitar</button></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-course">Agregar curso</button>
+        </section>
+        <template id="course-row">
+            <tr>
+                <td><input name="Cursos[__i__].NombreCurso" aria-label="Nombre del curso" maxlength="200" required /></td>
+                <td><input name="Cursos[__i__].DuracionMinutos" aria-label="Duración en minutos" type="number" min="1" required /></td>
+                <td><input name="Cursos[__i__].FechaInicio" aria-label="Fecha de inicio" type="date" /></td>
+                <td><input name="Cursos[__i__].FechaEntregaConstancia" aria-label="Entrega de constancia" type="date" /></td>
+                <td><button type="button" class="btn btn-secondary" data-quitar>Quitar</button></td>
+            </tr>
+        </template>
+        <div class="form-footer">
+            <a asp-action="Empleados" class="btn btn-secondary">Cancelar</a>
+            <button type="button" class="btn btn-secondary" id="previous-step" hidden>Atrás</button>
+            <button type="button" class="btn btn-primary" id="next-step" hidden>Siguiente</button>
+            <button type="submit" class="btn btn-primary" id="save-employee">@(editando ? "Guardar cambios" : "Guardar empleado")</button>
+        </div>
+    </form>
+</section>
+<script>
+(() => {
+    const form = document.getElementById("employee-form");
+    const editing = form.dataset.editando === "true";
+    const panels = [...form.querySelectorAll("[data-panel]")];
+    const tabs = [...form.querySelectorAll("[data-step]")];
+    const next = document.getElementById("next-step");
+    const previous = document.getElementById("previous-step");
+    const save = document.getElementById("save-employee");
+    const rows = document.getElementById("course-rows");
+    let step = 0;
+
+    function show(index) {
+        step = index;
+        panels.forEach((panel, i) => panel.hidden = i !== index);
+        tabs.forEach((tab, i) => {
+            tab.classList.toggle("btn-primary", i === index);
+            tab.classList.toggle("btn-secondary", i !== index);
+            if (i === index) tab.setAttribute("aria-current", "step");
+            else tab.removeAttribute("aria-current");
+        });
+        next.hidden = editing || index === 2;
+        previous.hidden = editing || index === 0;
+        save.hidden = !editing && index !== 2;
+    }
+    function go(index) {
+        if (!editing && index > step) {
+            for (let i = step; i < index; i++) {
+                const invalid = panels[i].querySelector(":invalid");
+                if (invalid) {
+                    show(i);
+                    invalid.reportValidity();
+                    return;
+                }
+            }
+        }
+        show(index);
+    }
+    tabs.forEach((tab, i) => tab.addEventListener("click", () => go(i)));
+    next.addEventListener("click", () => go(step + 1));
+    previous.addEventListener("click", () => go(step - 1));
+    document.getElementById("add-course").addEventListener("click", () => {
+        const template = document.getElementById("course-row");
+        rows.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__i__", rows.children.length));
+        rows.lastElementChild.querySelector("input").focus();
+    });
+    rows.addEventListener("click", event => {
+        const button = event.target.closest("[data-quitar]");
+        if (!button) return;
+        button.closest("tr").remove();
+        [...rows.rows].forEach((row, i) => row.querySelectorAll("[name]").forEach(input => {
+            input.name = input.name.replace(/Cursos\[\d+\]/, `Cursos[${i}]`);
+        }));
+    });
+    form.addEventListener("submit", event => {
+        const invalid = form.querySelector(":invalid");
+        if (!invalid) return;
+        event.preventDefault();
+        show(panels.indexOf(invalid.closest("[data-panel]")));
+        invalid.reportValidity();
+    });
+    form.noValidate = true;
+    show(Math.max(0, panels.findIndex(panel => panel.querySelector(".input-validation-error"))));
+})();
+</script>

@@ -12,6 +12,10 @@ public class CursoUsuario
     public int? CursoId { get; set; }
     [BsonElement("nombre_curso")]
     public string NombreCurso { get; set; } = null!;
+    [BsonElement("duracion_minutos")]
+    public int? DuracionMinutos { get; set; }
+    [BsonElement("fecha_entrega_constancia")]
+    public DateTime? FechaEntregaConstancia { get; set; }
     [BsonElement("institucion")]
     public string? Institucion { get; set; }
     [BsonElement("fecha_inicio")]

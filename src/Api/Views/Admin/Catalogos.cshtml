@@ -5,29 +5,19 @@
 }
 <header class="header">
     <h1>Catálogos</h1>
-    <p>Administra las opciones disponibles para empleados, domicilios y cursos.</p>
 </header>
 <section class="card">
-    <div class="catalog-toolbar">
-        <label for="catalog-type">Catálogo</label>
-        <select id="catalog-type">
-            <option value="categorias" selected="@(Model.Tipo == "categorias")">Categorías</option>
-            <option value="niveles" selected="@(Model.Tipo == "niveles")">Niveles</option>
-            <option value="instructores" selected="@(Model.Tipo == "instructores")">Instructores / instituciones</option>
-            <option value="sexos" selected="@(Model.Tipo == "sexos")">Sexos</option>
-            <option value="estados" selected="@(Model.Tipo == "estados")">Estados</option>
-        </select>
-    </div>
-    <div class="table-header">
-        <div><h2>@(Model.Tipo switch { "categorias" => "Categorías", "niveles" => "Niveles", "instructores" => "Instructores e instituciones", "sexos" => "Sexos", _ => "Estados" })</h2><p class="section-description">@Model.TotalElementos elemento(s)</p></div>
-    </div>
+    <nav class="employee-steps" aria-label="Catálogos">
+        <a asp-action="Catalogos" asp-route-tipo="sexos" class="btn @(Model.Tipo == "sexos" ? "btn-primary" : "btn-secondary")">Sexo</a>
+        <a asp-action="Catalogos" asp-route-tipo="estados" class="btn @(Model.Tipo == "estados" ? "btn-primary" : "btn-secondary")">Estado</a>
+    </nav>
     <div class="table-wrap">
         <table class="data-table catalog-table">
-            <thead><tr><th>Clave</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Clave</th><th>Nombre</th><th>En uso</th><th>Estatus</th><th>Acciones</th></tr></thead>
             <tbody>
             @if (Model.Elementos.Count == 0)
             {
-                <tr><td colspan="4" class="empty-state">Este catálogo todavía no tiene elementos.</td></tr>
+                <tr><td colspan="5" class="empty-state">Este catálogo todavía no tiene elementos.</td></tr>
             }
             @foreach (var item in Model.Elementos)
             {
@@ -35,7 +25,8 @@
                 <tr>
                     <td>@item.Clave</td>
                     <td><strong>@item.Nombre</strong>@if (!string.IsNullOrWhiteSpace(item.Descripcion)) { <small class="catalog-description">@item.Descripcion</small> }</td>
-                    <td><span class="catalog-state @(activo ? "state-yes" : "state-no")">@(activo ? "Sí" : "No")</span></td>
+                    <td>@(item.EnUso ? "Sí" : "No")</td>
+                    <td><span class="catalog-state @(activo ? "state-yes" : "state-no")">@(activo ? "Activo" : "Inactivo")</span></td>
                     <td class="actions-cell">
                         <div class="employee-actions">
                             <a asp-action="Catalogos" asp-route-tipo="@Model.Tipo" asp-route-editar="@item.Clave" class="btn btn-secondary">Editar</a>
@@ -44,7 +35,7 @@
                                 <input type="hidden" name="tipo" value="@Model.Tipo" />
                                 <input type="hidden" name="clave" value="@item.Clave" />
                                 <input type="hidden" name="pagina" value="@Model.Pagina" />
-                                <button type="submit" class="@(activo ? "delete-user-action" : "btn btn-secondary")">@(activo ? "Eliminar" : "Reactivar")</button>
+                                <button type="submit" disabled="@(activo && item.EnUso)" class="@(activo ? "delete-user-action" : "btn btn-secondary")">@(activo ? "Desactivar" : "Reactivar")</button>
                             </form>
                         </div>
                     </td>
@@ -60,12 +51,12 @@
         <a asp-action="Catalogos" asp-route-tipo="@Model.Tipo" asp-route-pagina="@(Model.Pagina + 1)"
            class="btn btn-secondary @(Model.Pagina >= Model.TotalPaginas ? "disabled" : "")" aria-disabled="@(Model.Pagina >= Model.TotalPaginas)">Siguiente →</a>
     </nav>
-    <div class="catalog-footer"><button type="button" class="btn btn-primary" id="new-catalog-item">＋ Nuevo elemento</button></div>
+    <div class="catalog-footer"><button type="button" class="btn btn-primary" id="new-catalog-item">@(Model.Tipo == "sexos" ? "Nuevo sexo" : "Nuevo estado")</button></div>
 </section>
 
 <dialog id="catalog-dialog" class="user-dialog catalog-dialog" data-open="@(Model.MostrarFormulario ? "true" : "false")">
     <div class="user-dialog-header">
-        <div><span class="detail-eyebrow">CATÁLOGO: @Model.Tipo.ToUpperInvariant()</span><h2>@(Model.EsEdicion ? "Editar elemento" : "Nuevo elemento")</h2></div>
+        <h2>@(Model.EsEdicion ? "Editar" : "Agregar") @(Model.Tipo == "sexos" ? "sexo" : "estado")</h2>
         <button type="button" class="dialog-close" data-close-dialog aria-label="Cerrar">×</button>
     </div>
     <form asp-action="GuardarCatalogo" method="post">
@@ -87,18 +78,6 @@
             <input asp-for="Elemento.Nombre" required />
             <span asp-validation-for="Elemento.Nombre"></span>
         </div>
-        @if (Model.Tipo == "categorias" || Model.Tipo == "instructores")
-        {
-            <div class="form-group">
-                <label asp-for="Elemento.Descripcion">@(Model.Tipo == "categorias" ? "DESCRIPCIÓN" : "CORREO / INSTITUCIÓN")</label>
-                <textarea asp-for="Elemento.Descripcion"></textarea>
-                <span asp-validation-for="Elemento.Descripcion"></span>
-            </div>
-        }
-        <div class="form-group">
-            <label asp-for="Elemento.Estatus">ESTADO</label>
-            <select asp-for="Elemento.Estatus"><option value="activo">Sí, activo</option><option value="inactivo">No, inactivo</option></select>
-        </div>
         <div class="form-footer">
             <button type="button" class="btn btn-secondary" data-close-dialog>Cancelar</button>
             <button type="submit" class="btn btn-primary">@(Model.EsEdicion ? "Guardar cambios" : "Agregar elemento")</button>
@@ -107,8 +86,6 @@
 </dialog>
 <script>
 (() => {
-    const selector = document.getElementById("catalog-type");
-    selector.addEventListener("change", () => window.location.href = `/Admin/Catalogos?tipo=${encodeURIComponent(selector.value)}`);
     const dialog = document.getElementById("catalog-dialog");
     document.getElementById("new-catalog-item").addEventListener("click", () => dialog.showModal());
     document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => button.closest("dialog").close()));

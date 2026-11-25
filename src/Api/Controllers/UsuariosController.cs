@@ -19,9 +19,15 @@ public class UsuariosController : ControllerBase
     public UsuariosController(SaturnoStore db) => _db = db;
 
     [HttpGet]
-    public async Task<ActionResult> GetUsuarios()
+    public async Task<ActionResult> GetUsuarios(int? numero, string? nombre, string? estatus, int pagina = 1)
     {
-        var usuarios = await _db.Usuarios.Query
+        if (numero is <= 0 || estatus is not (null or "ACTIVO" or "INACTIVO"))
+            return BadRequest(new { error = "Revisa el número de empleado y el estatus." });
+        if (numero is null && string.IsNullOrWhiteSpace(nombre) && estatus is null)
+            return Ok(Array.Empty<object>());
+
+        var query = _db.FiltrarEmpleados(nombre, numero, estatus);
+        var usuarios = await query.OrderBy(u => u.Id).Skip((Math.Clamp(pagina, 1, 1_000_000) - 1) * 20).Take(20)
             .Select(u => new
             {
                 u.Id,
@@ -65,6 +71,8 @@ public class UsuariosController : ControllerBase
                 Cursos = u.CursosUsuarios.Select(c => new
                 {
                     Curso = c.NombreCurso,
+                    c.DuracionMinutos,
+                    c.FechaEntregaConstancia,
                     c.Institucion,
                     c.FechaInicio,
                     c.FechaFinalizacion,
@@ -81,7 +89,8 @@ public class UsuariosController : ControllerBase
 
         if (usuario == null) return NotFound(new { error = "Usuario no encontrado." });
 
-        await _db.Usuarios.DeleteAsync(id);
+        if (!await _db.EliminarEmpleadoInactivoAsync(id))
+            return Conflict(new { error = "Solo se puede eliminar definitivamente a un empleado inactivo." });
 
         return NoContent();
     }
@@ -195,6 +204,7 @@ public class UsuariosController : ControllerBase
         {
             CursoId = dto.CursoId,
             NombreCurso = curso.Nombre,
+            DuracionMinutos = curso.DuracionMinutos,
             FechaInicio = DateTime.UtcNow,
             Estatus = "EN CURSO" 
         };

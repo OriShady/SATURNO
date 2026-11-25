@@ -4,6 +4,7 @@ using NoSqlU.Data;
 namespace NoSqlU.Api.Controllers;
 
 [ApiController]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 [Route("api/[controller]")]
 public class HealthController : ControllerBase
 {

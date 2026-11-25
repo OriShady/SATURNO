@@ -126,18 +126,20 @@ public class AsignarCursoViewModel
 public class EmpleadosViewModel
 {
     public string? Q { get; set; }
+    public int? Numero { get; set; }
+    public bool BusquedaAplicada { get; set; }
     public string? Estatus { get; set; }
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
     public int TotalEmpleados { get; set; }
     public IReadOnlyList<Usuario> Empleados { get; set; } = Array.Empty<Usuario>();
-    public EmpleadoFormViewModel NuevoEmpleado { get; set; } = new();
-    public bool MostrarFormulario { get; set; }
 }
 
 public class EmpleadoFormViewModel
 {
     public int Id { get; set; }
+    [RegularExpression("^(ACTIVO|INACTIVO)$")]
+    public string Estatus { get; set; } = "ACTIVO";
 
     [Required, StringLength(100)]
     public string Nombres { get; set; } = string.Empty;
@@ -165,10 +167,6 @@ public class EmpleadoFormViewModel
     public string? NumeroInterior { get; set; }
     [Required, StringLength(10)]
     public string CodigoPostal { get; set; } = string.Empty;
-    [Required, StringLength(100)]
-    public string Colonia { get; set; } = string.Empty;
-    [Required, StringLength(100)]
-    public string Municipio { get; set; } = string.Empty;
 
     public List<CursoEmpleadoFormViewModel> Cursos { get; set; } = new();
     public IReadOnlyList<Estado> Estados { get; set; } = Array.Empty<Estado>();
@@ -179,17 +177,18 @@ public class CursoEmpleadoFormViewModel
 {
     [Required, StringLength(200)]
     public string NombreCurso { get; set; } = string.Empty;
-    [Required, StringLength(150)]
-    public string Institucion { get; set; } = string.Empty;
+    [Range(1, int.MaxValue, ErrorMessage = "La duración debe ser mayor a cero.")]
+    public int? DuracionMinutos { get; set; }
     [DataType(DataType.Date)]
-    public DateTime? FechaFinalizacion { get; set; }
-    [Required, StringLength(20)]
-    public string Estatus { get; set; } = "COMPLETADO";
+    public DateTime? FechaInicio { get; set; }
+    [DataType(DataType.Date)]
+    public DateTime? FechaEntregaConstancia { get; set; }
+    public int? IndiceOriginal { get; set; }
 }
 
 public class CatalogosViewModel
 {
-    public string Tipo { get; set; } = "categorias";
+    public string Tipo { get; set; } = "sexos";
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
     public int TotalElementos { get; set; }
@@ -202,6 +201,7 @@ public class CatalogosViewModel
 
 public class CatalogoFilaViewModel
 {
+    public bool EnUso { get; set; }
     public string Clave { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public string? Descripcion { get; set; }

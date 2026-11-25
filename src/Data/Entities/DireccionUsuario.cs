@@ -17,9 +17,9 @@ public class DireccionUsuario
     [BsonElement("codigo_postal")]
     public string CodigoPostal { get; set; } = null!;
     [BsonElement("colonia")]
-    public string Colonia { get; set; } = null!;
+    public string? Colonia { get; set; }
     [BsonElement("municipio")]
-    public string Municipio { get; set; } = null!;
+    public string? Municipio { get; set; }
 
     [BsonIgnore]
     public Usuario Usuario { get; set; } = null!;
