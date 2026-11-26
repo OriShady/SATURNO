@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using NoSqlU.Api.Controllers;
@@ -27,6 +28,39 @@ public class EmployeeInputValidationTests
     {
         Assert.Equal(expectedValid, IsValid(new EmpleadoFormViewModel(), nameof(EmpleadoFormViewModel.Telefono), phone));
         Assert.Equal(expectedValid, IsValid(new RegistroUsuarioDto(), nameof(RegistroUsuarioDto.Telefono), phone));
+    }
+
+    [Fact]
+    public void EmployeeBirthDateRequiresAtLeastEighteenYears()
+    {
+        Assert.True(IsValid(
+            new EmpleadoFormViewModel(),
+            nameof(EmpleadoFormViewModel.FechaNacimiento),
+            DateTime.Today.AddYears(-18)));
+        Assert.False(IsValid(
+            new EmpleadoFormViewModel(),
+            nameof(EmpleadoFormViewModel.FechaNacimiento),
+            DateTime.Today.AddYears(-18).AddDays(1)));
+        Assert.False(IsValid(
+            new RegistroUsuarioDto(),
+            nameof(RegistroUsuarioDto.FechaNacimiento),
+            DateTime.Today.AddYears(-18).AddDays(1)));
+    }
+
+    [Fact]
+    public void EmployeeHireDateCannotPrecedeBirthDate()
+    {
+        var model = new EmpleadoFormViewModel { FechaNacimiento = new DateTime(1990, 5, 10) };
+        Assert.True(IsValid(model, nameof(EmpleadoFormViewModel.FechaIngreso), new DateTime(1990, 5, 10)));
+        Assert.False(IsValid(model, nameof(EmpleadoFormViewModel.FechaIngreso), new DateTime(1990, 5, 9)));
+    }
+
+    [Fact]
+    public void CourseCertificateCannotPrecedeCourseStart()
+    {
+        var model = new CursoEmpleadoFormViewModel { FechaInicio = new DateTime(2025, 2, 10) };
+        Assert.True(IsValid(model, nameof(CursoEmpleadoFormViewModel.FechaEntregaConstancia), new DateTime(2025, 2, 10)));
+        Assert.False(IsValid(model, nameof(CursoEmpleadoFormViewModel.FechaEntregaConstancia), new DateTime(2025, 2, 9)));
     }
 
     private static bool IsValid(object model, string memberName, object value)

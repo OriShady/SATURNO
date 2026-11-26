@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using NoSqlU.Data.Entities;
+using NoSqlU.Api.Models.Validation;
 
 namespace NoSqlU.Api.Models.ViewModels;
 
@@ -94,6 +95,7 @@ public class RegistroUsuarioViewModel
     [StringLength(50)]
     public string? ApellidoMaterno { get; set; }
     [Required, DataType(DataType.Date)]
+    [MinimumAge(18, ErrorMessage = "El empleado debe tener al menos 18 años.")]
     public DateTime? FechaNacimiento { get; set; }
     [Required]
     public char? SexoId { get; set; }
@@ -159,8 +161,10 @@ public class EmpleadoFormViewModel
     [StringLength(50)]
     public string? ApellidoMaterno { get; set; }
     [Required, DataType(DataType.Date)]
+    [MinimumAge(18, ErrorMessage = "El empleado debe tener al menos 18 años.")]
     public DateTime? FechaNacimiento { get; set; }
     [Required, DataType(DataType.Date)]
+    [DateOnOrAfter(nameof(FechaNacimiento), ErrorMessage = "La fecha de ingreso no puede ser anterior a la fecha de nacimiento.")]
     public DateTime? FechaIngreso { get; set; }
     [Required]
     public char? SexoId { get; set; }
@@ -195,6 +199,7 @@ public class CursoEmpleadoFormViewModel
     [DataType(DataType.Date)]
     public DateTime? FechaInicio { get; set; }
     [DataType(DataType.Date)]
+    [DateOnOrAfter(nameof(FechaInicio), ErrorMessage = "La entrega de constancia no puede ser anterior al inicio del curso.")]
     public DateTime? FechaEntregaConstancia { get; set; }
     public int? IndiceOriginal { get; set; }
 }

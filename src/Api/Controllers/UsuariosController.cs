@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver.Linq;
 using NoSqlU.Data;
 using NoSqlU.Data.Entities;
+using NoSqlU.Api.Models.Validation;
 
 namespace NoSqlU.Api.Controllers;
 
@@ -125,7 +126,7 @@ public class UsuariosController : ControllerBase
             Nombres = dto.Nombres,
             ApellidoPaterno = dto.ApellidoPaterno,
             ApellidoMaterno = dto.ApellidoMaterno,
-            FechaNacimiento = dto.FechaNacimiento,
+            FechaNacimiento = dto.FechaNacimiento!.Value,
             SexoId = dto.SexoId,
             CorreoEmpresarial = dto.CorreoEmpresarial,
             Telefono = dto.Telefono,
@@ -225,7 +226,9 @@ public class RegistroUsuarioDto
     public string Nombres { get; set; } = null!;
     public string? ApellidoPaterno { get; set; }
     public string? ApellidoMaterno { get; set; }
-    public DateTime FechaNacimiento { get; set; }
+    [Required(ErrorMessage = "La fecha de nacimiento es obligatoria.")]
+    [MinimumAge(18, ErrorMessage = "El empleado debe tener al menos 18 años.")]
+    public DateTime? FechaNacimiento { get; set; }
     public char SexoId { get; set; }
     [Required(ErrorMessage = "El correo empresarial es obligatorio.")]
     [EmailAddress(ErrorMessage = "Ingresa un correo válido, por ejemplo nombre@dominio.com.")]

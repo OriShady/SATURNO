@@ -327,8 +327,6 @@ public class AdminController : Controller
                 ModelState.AddModelError($"Cursos[{i}].DuracionMinutos", "Indica la duración del curso.");
             if (curso.FechaInicio is null && curso.FechaEntregaConstancia is null)
                 ModelState.AddModelError($"Cursos[{i}].FechaInicio", "Indica la fecha de inicio o de entrega de constancia de cada curso.");
-            if (curso.FechaInicio > curso.FechaEntregaConstancia)
-                ModelState.AddModelError($"Cursos[{i}].FechaEntregaConstancia", "La entrega de constancia no puede ser anterior al inicio.");
         }
     }
 

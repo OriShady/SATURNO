@@ -33,8 +33,8 @@
                 <div class="form-group"><label asp-for="Nombres">Nombre</label><input asp-for="Nombres" required maxlength="100" /></div>
                 <div class="form-group"><label asp-for="ApellidoPaterno">Apellido paterno</label><input asp-for="ApellidoPaterno" required maxlength="50" /></div>
                 <div class="form-group"><label asp-for="ApellidoMaterno">Apellido materno</label><input asp-for="ApellidoMaterno" maxlength="50" /></div>
-                <div class="form-group"><label asp-for="FechaNacimiento">Fecha de nacimiento</label><input asp-for="FechaNacimiento" type="date" required /></div>
-                <div class="form-group"><label asp-for="FechaIngreso">Fecha de ingreso</label><input asp-for="FechaIngreso" type="date" required /></div>
+                <div class="form-group"><label asp-for="FechaNacimiento">Fecha de nacimiento</label><input asp-for="FechaNacimiento" type="date" max="@DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd")" title="El empleado debe tener al menos 18 años." required /><span asp-validation-for="FechaNacimiento"></span></div>
+                <div class="form-group"><label asp-for="FechaIngreso">Fecha de ingreso</label><input asp-for="FechaIngreso" type="date" min="@Model.FechaNacimiento?.ToString("yyyy-MM-dd")" title="La fecha de ingreso no puede ser anterior al nacimiento." required /><span asp-validation-for="FechaIngreso"></span></div>
                 <div class="form-group"><label asp-for="SexoId">Sexo</label><select asp-for="SexoId" required><option value="">Seleccionar</option>@foreach (var sexo in Model.Sexos) { <option value="@sexo.Id">@sexo.Descripcion</option> }</select></div>
                 <div class="form-group">
                     <label asp-for="CorreoEmpresarial">Correo institucional</label>
@@ -78,7 +78,7 @@
                             <td><input asp-for="Cursos[i].IndiceOriginal" type="hidden" /><input asp-for="Cursos[i].NombreCurso" aria-label="Nombre del curso" maxlength="200" required /></td>
                             <td><input asp-for="Cursos[i].DuracionMinutos" aria-label="Duración en minutos" type="number" min="1" required="@(Model.Cursos[i].IndiceOriginal is null)" /></td>
                             <td><input asp-for="Cursos[i].FechaInicio" aria-label="Fecha de inicio" type="date" /></td>
-                            <td><input asp-for="Cursos[i].FechaEntregaConstancia" aria-label="Entrega de constancia" type="date" /></td>
+                            <td><input asp-for="Cursos[i].FechaEntregaConstancia" aria-label="Entrega de constancia" type="date" title="La fecha de constancia debe ser igual o posterior al inicio del curso." /><span asp-validation-for="Cursos[i].FechaEntregaConstancia"></span></td>
                             <td><button type="button" class="btn btn-secondary" data-quitar>Quitar</button></td>
                         </tr>
                     }
@@ -92,7 +92,7 @@
                 <td><input name="Cursos[__i__].NombreCurso" aria-label="Nombre del curso" maxlength="200" required /></td>
                 <td><input name="Cursos[__i__].DuracionMinutos" aria-label="Duración en minutos" type="number" min="1" required /></td>
                 <td><input name="Cursos[__i__].FechaInicio" aria-label="Fecha de inicio" type="date" /></td>
-                <td><input name="Cursos[__i__].FechaEntregaConstancia" aria-label="Entrega de constancia" type="date" /></td>
+                <td><input name="Cursos[__i__].FechaEntregaConstancia" aria-label="Entrega de constancia" type="date" title="La fecha de constancia debe ser igual o posterior al inicio del curso." /></td>
                 <td><button type="button" class="btn btn-secondary" data-quitar>Quitar</button></td>
             </tr>
         </template>
@@ -130,6 +130,7 @@
         save.hidden = !editing && index !== 2;
     }
     function go(index) {
+        syncDateLimits();
         if (!editing && index > step) {
             for (let i = step; i < index; i++) {
                 const invalid = panels[i].querySelector(":invalid");
@@ -145,9 +146,27 @@
     tabs.forEach((tab, i) => tab.addEventListener("click", () => go(i)));
     next.addEventListener("click", () => go(step + 1));
     previous.addEventListener("click", () => go(step - 1));
+    function syncDateLimits() {
+        const birthDate = form.querySelector('[name="FechaNacimiento"]');
+        const hireDate = form.querySelector('[name="FechaIngreso"]');
+        if (birthDate && hireDate) hireDate.min = birthDate.value;
+        rows.querySelectorAll("tr").forEach(row => {
+            const startDate = row.querySelector('input[name$=".FechaInicio"]');
+            const certificateDate = row.querySelector('input[name$=".FechaEntregaConstancia"]');
+            if (startDate && certificateDate) certificateDate.min = startDate.value;
+        });
+    }
+    form.addEventListener("input", event => {
+        if (event.target instanceof HTMLInputElement && event.target.type === "date") syncDateLimits();
+    });
+    form.addEventListener("change", event => {
+        if (event.target instanceof HTMLInputElement && event.target.type === "date") syncDateLimits();
+    });
+    syncDateLimits();
     document.getElementById("add-course").addEventListener("click", () => {
         const template = document.getElementById("course-row");
         rows.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__i__", rows.children.length));
+        syncDateLimits();
         rows.lastElementChild.querySelector("input").focus();
     });
     rows.addEventListener("click", event => {
@@ -159,6 +178,7 @@
         }));
     });
     form.addEventListener("submit", event => {
+        syncDateLimits();
         const invalid = form.querySelector(":invalid");
         if (!invalid) return;
         event.preventDefault();
