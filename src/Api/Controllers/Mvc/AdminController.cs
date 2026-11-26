@@ -660,7 +660,7 @@ public class AdminController : Controller
         model.TotalEmpleados = await query.CountAsync();
         model.TotalPaginas = Math.Max(1, (int)Math.Ceiling((double)model.TotalEmpleados / PageSize));
         model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
-        model.Empleados = await query.OrderBy(u => u.Id).Skip((model.Pagina - 1) * PageSize)
+        model.Empleados = await query.OrderByDescending(u => u.Id).Skip((model.Pagina - 1) * PageSize)
             .Take(PageSize).ToListAsync();
         return model;
     }

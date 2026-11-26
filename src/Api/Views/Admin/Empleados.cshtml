@@ -9,7 +9,7 @@
 </header>
 <section class="card">
     <form asp-action="Empleados" method="get">
-        <div class="employee-fields">
+        <div class="employee-fields employee-filter-fields">
             <div class="form-group"><label for="numero">Número de empleado</label><input id="numero" name="numero" type="number" min="1" value="@Model.Numero" /></div>
             <div class="form-group"><label for="q">Nombre</label><input id="q" name="q" value="@Model.Q" /></div>
             <div class="form-group"><label for="estatus">Estatus</label><select id="estatus" name="estatus">
@@ -17,8 +17,11 @@
                 <option value="ACTIVO" selected="@(Model.Estatus == "ACTIVO")">Activo</option>
                 <option value="INACTIVO" selected="@(Model.Estatus == "INACTIVO")">Inactivo</option>
             </select></div>
+            <div class="employee-filter-actions">
+                <a asp-action="Empleados" class="btn btn-secondary">Limpiar</a>
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </div>
         </div>
-        <div class="form-footer"><a asp-action="Empleados" class="btn btn-secondary">Limpiar</a><button type="submit" class="btn btn-primary">Buscar</button></div>
     </form>
 </section>
 

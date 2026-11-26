@@ -29,6 +29,9 @@
 .login-card .btn { width: 100%; margin-top: 8px; }
 .employee-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
 .employee-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 10px 16px; }
+.employee-filter-fields { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: 0 12px; }
+.employee-filter-fields .form-group { margin-bottom: 0; }
+.employee-filter-actions { display: flex; align-items: center; gap: 8px; }
 .employee-steps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .employee-empty { border: 1px dashed var(--border); border-radius: 12px; padding: 48px 20px; text-align: center; color: var(--muted); }
 .employee-course-table input { width: 100%; min-width: 120px; }
@@ -603,6 +606,11 @@ textarea {
   }
 }
 
+@media (max-width: 1000px) {
+  .employee-filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+  .employee-filter-actions { grid-column: 1 / -1; justify-self: end; }
+}
+
 @media (max-width: 480px) {
   .card {
     padding: 16px;
@@ -625,6 +633,10 @@ textarea {
     width: 100%;
     text-align: center;
   }
+
+  .employee-filter-fields { grid-template-columns: 1fr; }
+  .employee-filter-actions { grid-column: auto; justify-self: stretch; }
+  .employee-filter-actions .btn { flex: 1; text-align: center; }
 }
 /* ======================
    CURSOS / ESTADOS
