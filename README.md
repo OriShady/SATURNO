@@ -23,7 +23,7 @@ Sustituye `TU_CONTRASENA` por tu contraseña. Al arrancar, la aplicación crea l
 
 La configuración local está en `src/Api/appsettings.json`. Para otra instancia usa `MongoDB__ConnectionString` y `MongoDB__Database` y ejecuta el script sobre la base correspondiente. Para una URI con credenciales, usa User Secrets o una variable de entorno.
 
-Para preparar la revisión del modelo, los IDs, la concurrencia y los catálogos, consulta la [guía de estudio](GUIA_ESTUDIO_REVISION_MONGODB.md).
+Para preparar la revisión, consulta la [guía de estudio](GUIA_ESTUDIO_REVISION_MONGODB.md) y la [guía paso a paso para principiantes](GUIA_PASO_A_PASO_SATURNO_MONGODB.md).
 
 ## Modelo de datos
 
