@@ -97,9 +97,11 @@ public class RegistroUsuarioViewModel
     public DateTime? FechaNacimiento { get; set; }
     [Required]
     public char? SexoId { get; set; }
-    [Required, EmailAddress, StringLength(150)]
+    [Required(ErrorMessage = "El correo empresarial es obligatorio.")]
+    [EmailAddress(ErrorMessage = "Ingresa un correo válido, por ejemplo nombre@dominio.com.")]
+    [StringLength(150, ErrorMessage = "El correo no puede exceder 150 caracteres.")]
     public string CorreoEmpresarial { get; set; } = string.Empty;
-    [StringLength(20)]
+    [RegularExpression(@"^(?:[0-9]{10})?$", ErrorMessage = "Ingresa 10 dígitos, sin espacios ni guiones.")]
     public string? Telefono { get; set; }
     [Required, StringLength(50)]
     public string UsuarioLogin { get; set; } = string.Empty;
@@ -162,9 +164,11 @@ public class EmpleadoFormViewModel
     public DateTime? FechaIngreso { get; set; }
     [Required]
     public char? SexoId { get; set; }
-    [Required, EmailAddress, StringLength(150)]
+    [Required(ErrorMessage = "El correo institucional es obligatorio.")]
+    [EmailAddress(ErrorMessage = "Ingresa un correo válido, por ejemplo nombre@dominio.com.")]
+    [StringLength(150, ErrorMessage = "El correo no puede exceder 150 caracteres.")]
     public string CorreoEmpresarial { get; set; } = string.Empty;
-    [StringLength(20)]
+    [RegularExpression(@"^(?:[0-9]{10})?$", ErrorMessage = "Ingresa 10 dígitos, sin espacios ni guiones.")]
     public string? Telefono { get; set; }
     [Range(1, int.MaxValue, ErrorMessage = "Selecciona un estado.")]
     public int EstadoId { get; set; }

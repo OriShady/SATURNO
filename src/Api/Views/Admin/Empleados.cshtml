@@ -3,11 +3,22 @@
     ViewData["Title"] = "Buscar empleados";
     ViewData["Active"] = "Empleados";
 }
-<header class="header employee-heading">
-    <h1>Empleados</h1>
-    <a asp-action="RegistrarEmpleado" class="btn btn-primary">Nuevo empleado</a>
+<header class="header employee-page-header">
+    <div class="employee-heading-copy">
+        <span class="employee-eyebrow">GESTIÓN DEL PERSONAL</span>
+        <h1>Empleados</h1>
+        <p>Consulta el directorio y administra la información de tu equipo.</p>
+    </div>
+    <a asp-action="RegistrarEmpleado" id="new-employee" class="btn btn-primary">Nuevo empleado</a>
 </header>
-<section class="card">
+<section class="card employee-filter-card">
+    <div class="employee-filter-heading">
+        <div>
+            <span class="employee-eyebrow">BÚSQUEDA RÁPIDA</span>
+            <h2>Encuentra a una persona</h2>
+        </div>
+        <p>Combina número, nombre o estatus para filtrar el directorio.</p>
+    </div>
     <form asp-action="Empleados" method="get">
         <div class="employee-fields employee-filter-fields">
             <div class="form-group"><label for="numero">Número de empleado</label><input id="numero" name="numero" type="number" min="1" value="@Model.Numero" /></div>
@@ -25,10 +36,16 @@
     </form>
 </section>
 
-<section class="card">
-    <div class="section-header table-header"><h2>Directorio de empleados</h2><span class="badge-count">@Model.TotalEmpleados registros</span></div>
+<section class="card employee-directory-card">
+    <div class="section-header employee-list-heading table-header">
+        <div>
+            <span class="employee-eyebrow">DIRECTORIO</span>
+            <h2>Empleados registrados</h2>
+        </div>
+        <span class="badge-count">@Model.TotalEmpleados registros</span>
+    </div>
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table employee-table">
             <thead><tr><th>No. empleado</th><th>Nombre</th><th>Correo institucional</th><th>Estatus</th><th>Ingreso</th><th>Acciones</th></tr></thead>
             <tbody>
             @if (Model.Empleados.Count == 0)
@@ -48,8 +65,9 @@
                     var activo = empleado.Estatus == "ACTIVO";
                     var nombre = $"{empleado.Nombres} {empleado.ApellidoPaterno} {empleado.ApellidoMaterno}".Trim();
                     <tr>
-                        <td>@empleado.Id</td><td>@nombre</td><td>@empleado.CorreoEmpresarial</td>
-                        <td>@(activo ? "Activo" : "Inactivo")</td><td>@empleado.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                        <td class="employee-number">#@empleado.Id</td><td>@nombre</td><td>@empleado.CorreoEmpresarial</td>
+                        <td><span class="status @(activo ? "activo" : "inactivo")">@(activo ? "Activo" : "Inactivo")</span></td>
+                        <td>@empleado.FechaRegistro.ToString("dd/MM/yyyy")</td>
                         <td><div class="employee-actions">
                             <a asp-action="DetalleUsuario" asp-route-id="@empleado.Id" class="btn btn-secondary">Detalles</a>
                             <a asp-action="EditarEmpleado" asp-route-id="@empleado.Id" class="btn btn-secondary">Editar</a>

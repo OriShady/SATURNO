@@ -4,17 +4,27 @@
     ViewData["Title"] = editando ? "Editar empleado" : "Nuevo empleado";
     ViewData["Active"] = "Empleados";
 }
-<header class="header"><h1>@ViewData["Title"]</h1></header>
+<header class="header employee-page-header employee-flow-header">
+    <div class="employee-heading-copy">
+        <span class="employee-eyebrow">@(editando ? "ACTUALIZACIÓN DE DATOS" : "REGISTRO DE PERSONAL")</span>
+        <h1>@ViewData["Title"]</h1>
+        <p>@(editando ? "Revisa y actualiza la información del empleado por secciones." : "Completa cada sección para agregar a una persona al directorio.")</p>
+    </div>
+    <a asp-action="Empleados" class="btn btn-secondary">Volver al directorio</a>
+</header>
 <section class="card employee-edit-card">
     <form asp-action="@(editando ? "EditarEmpleado" : "RegistrarEmpleado")" method="post" id="employee-form" data-editando="@(editando ? "true" : "false")">
         <input asp-for="Id" type="hidden" />
         <div asp-validation-summary="All" class="validation-summary" role="alert"></div>
         <nav class="employee-steps" aria-label="Secciones del empleado">
-            <button type="button" class="btn btn-secondary" data-step="0">@(editando ? "Datos" : "1. Datos")</button>
-            <button type="button" class="btn btn-secondary" data-step="1">@(editando ? "Domicilio" : "2. Domicilio")</button>
-            <button type="button" class="btn btn-secondary" data-step="2">@(editando ? "Cursos" : "3. Cursos")</button>
+            <button type="button" class="btn btn-secondary" data-step="0"><span class="employee-step-number">01</span><span>Datos personales</span></button>
+            <button type="button" class="btn btn-secondary" data-step="1"><span class="employee-step-number">02</span><span>Domicilio</span></button>
+            <button type="button" class="btn btn-secondary" data-step="2"><span class="employee-step-number">03</span><span>Cursos</span></button>
         </nav>
         <section data-panel class="edit-form-section">
+            <div class="employee-step-heading">
+                <div><h2>Identificación y contacto</h2><p>Nombre, datos generales y medios de contacto.</p></div>
+            </div>
             <div class="employee-fields">
                 @if (editando)
                 {
@@ -26,8 +36,16 @@
                 <div class="form-group"><label asp-for="FechaNacimiento">Fecha de nacimiento</label><input asp-for="FechaNacimiento" type="date" required /></div>
                 <div class="form-group"><label asp-for="FechaIngreso">Fecha de ingreso</label><input asp-for="FechaIngreso" type="date" required /></div>
                 <div class="form-group"><label asp-for="SexoId">Sexo</label><select asp-for="SexoId" required><option value="">Seleccionar</option>@foreach (var sexo in Model.Sexos) { <option value="@sexo.Id">@sexo.Descripcion</option> }</select></div>
-                <div class="form-group"><label asp-for="CorreoEmpresarial">Correo institucional</label><input asp-for="CorreoEmpresarial" type="email" required maxlength="150" /></div>
-                <div class="form-group"><label asp-for="Telefono">Celular</label><input asp-for="Telefono" type="tel" maxlength="20" /></div>
+                <div class="form-group">
+                    <label asp-for="CorreoEmpresarial">Correo institucional</label>
+                    <input asp-for="CorreoEmpresarial" type="email" required maxlength="150" autocomplete="email" placeholder="nombre@dominio.com" />
+                    <span asp-validation-for="CorreoEmpresarial"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Telefono">Celular</label>
+                    <input asp-for="Telefono" type="tel" inputmode="numeric" minlength="10" maxlength="10" pattern="[0-9]{10}" title="Ingresa 10 dígitos sin espacios ni guiones." />
+                    <span asp-validation-for="Telefono"></span>
+                </div>
                 @if (editando)
                 {
                     <div class="form-group"><label asp-for="Estatus">Estatus</label><select asp-for="Estatus"><option value="ACTIVO">Activo</option><option value="INACTIVO">Inactivo</option></select></div>
@@ -35,6 +53,9 @@
             </div>
         </section>
         <section data-panel class="edit-form-section">
+            <div class="employee-step-heading">
+                <div><h2>Dirección del empleado</h2><p>Calle, números, código postal y estado.</p></div>
+            </div>
             <div class="employee-fields">
                 <div class="form-group"><label asp-for="Calle">Calle</label><input asp-for="Calle" required maxlength="150" /></div>
                 <div class="form-group"><label asp-for="NumeroExterior">Número exterior</label><input asp-for="NumeroExterior" required maxlength="20" /></div>
@@ -44,6 +65,9 @@
             </div>
         </section>
         <section data-panel class="edit-form-section">
+            <div class="employee-step-heading">
+                <div><h2>Historial de capacitación</h2><p>Cursos y fechas de seguimiento del empleado.</p></div>
+            </div>
             <div class="table-wrap">
                 <table class="data-table employee-course-table">
                     <thead><tr><th>Curso</th><th>Duración (minutos)</th><th>Fecha de inicio</th><th>Entrega de constancia</th><th>Acciones</th></tr></thead>

@@ -4,6 +4,8 @@ const txt = (maxLength, minLength = 1) => ({ bsonType: "string", minLength, maxL
 const optional = rule => ({ ...rule, bsonType: [rule.bsonType, "null"], minLength: 0 });
 const intId = { bsonType: "int", minimum: 1 };
 const date = { bsonType: "date" };
+const email = { ...txt(150), pattern: "^[^\\s@]+@[^\\s@]+$" };
+const phone = optional({ ...txt(10), pattern: "^(?:[0-9]{10})?$" });
 const estatus = { enum: ["ACTIVO", "INACTIVO"] };
 const estatusCurso = { enum: ["activo", "inactivo"] };
 const object = (required, properties) => ({ bsonType: "object", required, properties });
@@ -31,8 +33,8 @@ const empleado = object(
   ["_id", "nombre", "fecha_nacimiento", "fecha_ingreso", "id_sexo", "correo_institucional", "estatus", "domicilios", "cursos"],
   {
     _id: intId, nombre: txt(100), apellido_paterno: optional(txt(50)), apellido_materno: optional(txt(50)),
-    fecha_nacimiento: date, fecha_ingreso: date, correo_institucional: txt(150),
-    id_sexo: txt(1), celular: optional(txt(20)), estatus,
+    fecha_nacimiento: date, fecha_ingreso: date, correo_institucional: email,
+    id_sexo: txt(1), celular: phone, estatus,
     domicilios: { bsonType: "array", items: domicilio },
     cursos: { bsonType: "array", items: certificado },
     credencial: object(["usuario", "password_hash"], { usuario: txt(50), password_hash: txt(255) })

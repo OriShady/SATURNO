@@ -18,8 +18,8 @@
                 <div class="form-group"><label asp-for="SexoId">SEXO *</label><select asp-for="SexoId" required><option value="">Seleccione...</option>@foreach (var sexo in Model.Sexos) { <option value="@sexo.Id">@sexo.Descripcion</option> }</select></div>
             </div>
             <div>
-                <div class="form-group"><label asp-for="CorreoEmpresarial">CORREO EMPRESARIAL *</label><input asp-for="CorreoEmpresarial" type="email" required /><span asp-validation-for="CorreoEmpresarial"></span></div>
-                <div class="form-group"><label asp-for="Telefono">TELÉFONO</label><input asp-for="Telefono" type="tel" /></div>
+                <div class="form-group"><label asp-for="CorreoEmpresarial">CORREO EMPRESARIAL *</label><input asp-for="CorreoEmpresarial" type="email" maxlength="150" autocomplete="email" required /><span asp-validation-for="CorreoEmpresarial"></span></div>
+                <div class="form-group"><label asp-for="Telefono">TELÉFONO</label><input asp-for="Telefono" type="tel" inputmode="numeric" minlength="10" maxlength="10" pattern="[0-9]{10}" title="Ingresa 10 dígitos sin espacios ni guiones." /><span asp-validation-for="Telefono"></span></div>
                 <div class="form-group"><label asp-for="UsuarioLogin">NOMBRE DE USUARIO *</label><input asp-for="UsuarioLogin" required /><span asp-validation-for="UsuarioLogin"></span></div>
                 <div class="form-group"><label asp-for="Password">CONTRASEÑA *</label><input asp-for="Password" type="password" required /><span asp-validation-for="Password"></span></div>
             </div>
