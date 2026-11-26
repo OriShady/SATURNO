@@ -99,8 +99,9 @@ function seed(coleccion, documentos) {
 seed("sexos", [
   { _id: "M", nombre: "Masculino", estatus: "ACTIVO" },
   { _id: "F", nombre: "Femenino", estatus: "ACTIVO" },
-  { _id: "X", nombre: "No binario / Otro", estatus: "ACTIVO" }
+  { _id: "X", nombre: "Otro", estatus: "ACTIVO" }
 ]);
+db.sexos.updateOne({ _id: "X" }, { $set: { nombre: "Otro" } });
 
 const estadosMexico = [
   "Aguascalientes",

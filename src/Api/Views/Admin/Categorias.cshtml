@@ -8,6 +8,7 @@
     <section class="card">
         <h3>＋ Nueva Categoría</h3>
         <form asp-action="CrearCategoria" method="post">
+            <input type="hidden" name="pagina" value="@Model.Pagina" />
             <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
             <div class="form-group">
                 <label asp-for="NuevaCategoria.Nombre">NOMBRE *</label>
@@ -25,7 +26,7 @@
         </form>
     </section>
     <section class="card">
-        <div class="table-header"><h3>Listado de Categorías</h3><span class="badge-count">@Model.Categorias.Count registros</span></div>
+        <div class="table-header"><h3>Listado de Categorías</h3><span class="badge-count">@Model.TotalCategorias registros</span></div>
         <div class="table-wrap">
             <table class="data-table">
                 <thead><tr><th>#</th><th>NOMBRE</th><th>DESCRIPCIÓN</th><th>ESTATUS</th><th>ACCIONES</th></tr></thead>
@@ -41,6 +42,7 @@
                         <td>
                             <form asp-action="CambiarCategoriaEstatus" method="post" class="inline-form">
                                 <input type="hidden" name="id" value="@categoria.Id" />
+                                <input type="hidden" name="pagina" value="@Model.Pagina" />
                                 <button type="submit" class="btn-icon @(categoria.Estatus == "activo" ? "delete" : "edit")" aria-label="@(categoria.Estatus == "activo" ? "Desactivar" : "Reactivar") categoría" title="@(categoria.Estatus == "activo" ? "Desactivar" : "Reactivar")">@(categoria.Estatus == "activo" ? "⏻" : "↻")</button>
                             </form>
                         </td>
@@ -49,5 +51,19 @@
                 </tbody>
             </table>
         </div>
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav class="pagination" aria-label="Paginación de categorías">
+                @if (Model.Pagina > 1)
+                {
+                    <a asp-action="Categorias" asp-route-pagina="@(Model.Pagina - 1)" class="btn btn-secondary">Anterior</a>
+                }
+                <span>Página @Model.Pagina de @Model.TotalPaginas</span>
+                @if (Model.Pagina < Model.TotalPaginas)
+                {
+                    <a asp-action="Categorias" asp-route-pagina="@(Model.Pagina + 1)" class="btn btn-secondary">Siguiente</a>
+                }
+            </nav>
+        }
     </section>
 </div>

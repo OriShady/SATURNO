@@ -15,7 +15,7 @@
                     <div class="flex-1"><label asp-for="ApellidoMaterno">APELLIDO MATERNO</label><input asp-for="ApellidoMaterno" /><span asp-validation-for="ApellidoMaterno"></span></div>
                 </div>
                 <div class="form-group"><label asp-for="FechaNacimiento">FECHA DE NACIMIENTO *</label><input asp-for="FechaNacimiento" type="date" required /><span asp-validation-for="FechaNacimiento"></span></div>
-                <div class="form-group"><label asp-for="SexoId">SEXO *</label><select asp-for="SexoId" required><option value="">Seleccione...</option><option value="M">Masculino</option><option value="F">Femenino</option><option value="X">Otro</option></select></div>
+                <div class="form-group"><label asp-for="SexoId">SEXO *</label><select asp-for="SexoId" required><option value="">Seleccione...</option>@foreach (var sexo in Model.Sexos) { <option value="@sexo.Id">@sexo.Descripcion</option> }</select></div>
             </div>
             <div>
                 <div class="form-group"><label asp-for="CorreoEmpresarial">CORREO EMPRESARIAL *</label><input asp-for="CorreoEmpresarial" type="email" required /><span asp-validation-for="CorreoEmpresarial"></span></div>

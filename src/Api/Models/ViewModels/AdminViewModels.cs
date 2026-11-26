@@ -8,6 +8,9 @@ public class DashboardViewModel
     public int TotalCursos { get; set; }
     public int TotalCategorias { get; set; }
     public int CursosActivos { get; set; }
+    public int TotalCursosRegistrados { get; set; }
+    public int Pagina { get; set; } = 1;
+    public int TotalPaginas { get; set; } = 1;
     public IReadOnlyList<Curso> Cursos { get; set; } = Array.Empty<Curso>();
 }
 
@@ -24,6 +27,9 @@ public class CategoriaCreateViewModel
 public class CategoriasViewModel
 {
     public CategoriaCreateViewModel NuevaCategoria { get; set; } = new();
+    public int Pagina { get; set; } = 1;
+    public int TotalPaginas { get; set; } = 1;
+    public int TotalCategorias { get; set; }
     public IReadOnlyList<Categoria> Categorias { get; set; } = Array.Empty<Categoria>();
 }
 
@@ -70,6 +76,9 @@ public class BuscarCursosViewModel
     public string? Estatus { get; set; }
     public decimal? Min { get; set; }
     public decimal? Max { get; set; }
+    public int Pagina { get; set; } = 1;
+    public int TotalPaginas { get; set; } = 1;
+    public int TotalResultados { get; set; }
     public IReadOnlyList<Categoria> Categorias { get; set; } = Array.Empty<Categoria>();
     public IReadOnlyList<Nivel> Niveles { get; set; } = Array.Empty<Nivel>();
     public IReadOnlyList<Instructor> Instructores { get; set; } = Array.Empty<Instructor>();
@@ -111,6 +120,7 @@ public class RegistroUsuarioViewModel
     [Required, StringLength(100)]
     public string Municipio { get; set; } = string.Empty;
     public IReadOnlyList<Estado> Estados { get; set; } = Array.Empty<Estado>();
+    public IReadOnlyList<Sexo> Sexos { get; set; } = Array.Empty<Sexo>();
 }
 
 public class AsignarCursoViewModel
@@ -127,7 +137,6 @@ public class EmpleadosViewModel
 {
     public string? Q { get; set; }
     public int? Numero { get; set; }
-    public bool BusquedaAplicada { get; set; }
     public string? Estatus { get; set; }
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;

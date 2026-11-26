@@ -139,9 +139,29 @@ public sealed class SaturnoStore
         return usuario;
     }
 
-    public async Task<List<Curso>> CargarCursosAsync(int? id = null)
+    public async Task<List<Curso>> CargarCursosAsync(int? id = null, int? pagina = null, int tamanoPagina = 5)
     {
-        var cursos = await Cursos.Query.Where(c => !id.HasValue || c.Id == id.GetValueOrDefault()).ToListAsync();
+        var query = Cursos.Query.Where(c => !id.HasValue || c.Id == id.GetValueOrDefault());
+        if (pagina.HasValue)
+            query = query.OrderByDescending(c => c.FechaCreacion)
+                .ThenBy(c => c.Id)
+                .Skip((pagina.Value - 1) * tamanoPagina)
+                .Take(tamanoPagina);
+
+        return await CargarCatalogosCursoAsync(await query.ToListAsync());
+    }
+
+    public async Task<List<Curso>> CargarCursosAsync(IQueryable<Curso> query, int pagina, int tamanoPagina)
+    {
+        var cursos = await query.OrderBy(c => c.Nombre)
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .ToListAsync();
+        return await CargarCatalogosCursoAsync(cursos);
+    }
+
+    private async Task<List<Curso>> CargarCatalogosCursoAsync(List<Curso> cursos)
+    {
         if (cursos.Count == 0) return cursos;
 
         var categorias = (await Categorias.Query.ToListAsync()).ToDictionary(c => c.Id);

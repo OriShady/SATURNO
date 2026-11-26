@@ -18,7 +18,7 @@
     </div>
 </section>
 <section class="card">
-    <div class="section-header table-header"><h3>🎬 Cursos registrados</h3><span class="badge-count">@Model.Cursos.Count registros</span></div>
+    <div class="section-header table-header"><h3>🎬 Cursos registrados</h3><span class="badge-count">@Model.TotalCursosRegistrados registros</span></div>
     <div class="grid-cards">
         @if (Model.Cursos.Count == 0) { <p>No hay cursos registrados.</p> }
         @foreach (var curso in Model.Cursos)
@@ -38,4 +38,18 @@
             </article>
         }
     </div>
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav class="pagination" aria-label="Paginación de cursos">
+            @if (Model.Pagina > 1)
+            {
+                <a asp-action="Index" asp-route-pagina="@(Model.Pagina - 1)" class="btn btn-secondary">Anterior</a>
+            }
+            <span>Página @Model.Pagina de @Model.TotalPaginas</span>
+            @if (Model.Pagina < Model.TotalPaginas)
+            {
+                <a asp-action="Index" asp-route-pagina="@(Model.Pagina + 1)" class="btn btn-secondary">Siguiente</a>
+            }
+        </nav>
+    }
 </section>

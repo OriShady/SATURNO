@@ -23,12 +23,14 @@ Sustituye `TU_CONTRASENA` por tu contraseña. Al arrancar, la aplicación crea l
 
 La configuración local está en `src/Api/appsettings.json`. Para otra instancia usa `MongoDB__ConnectionString` y `MongoDB__Database` y ejecuta el script sobre la base correspondiente. Para una URI con credenciales, usa User Secrets o una variable de entorno.
 
+Para preparar la revisión del modelo, los IDs, la concurrencia y los catálogos, consulta la [guía de estudio](GUIA_ESTUDIO_REVISION_MONGODB.md).
+
 ## Modelo de datos
 
 - `empleados` contiene datos personales, domicilios y certificados. Los registros de la API que tienen credencial guardan el hash dentro del documento.
 - `sexos`, `estados`, `categorias`, `niveles`, `instructores` y `cursos` son catálogos independientes.
 - Los identificadores numéricos mantienen los contratos actuales de la API y el número de empleado. MongoDB asigna esos números mediante incrementos atómicos en `contadores`. El catálogo de sexos usa códigos de un car?cter.
 - Los certificados pueden registrar nombre e institución sin pertenecer al catálogo de cursos.
-- La búsqueda de empleados requiere al menos un filtro. Los cursos del formulario guardan nombre, duración y fecha de inicio o entrega de constancia. Un empleado debe estar inactivo para poder eliminarlo definitivamente.
+- La pantalla principal del panel lista empleados sin requerir un filtro; el endpoint JSON de usuarios puede recibir filtros y número de página. Los cursos del formulario guardan nombre, duración y fecha de inicio o entrega de constancia. Un empleado debe estar inactivo para poder eliminarlo definitivamente.
 
-La base arranca con catálogos y cursos de ejemplo. Los empleados se crean desde el panel o la API.
+La base arranca con catálogos y cursos de ejemplo. Los empleados se crean desde el panel o la API; el inicializador no agrega empleados de demostración. La pantalla principal muestra los registros existentes, cinco por página, y permanece vacía si todavía no has registrado empleados.

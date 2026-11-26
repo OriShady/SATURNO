@@ -4,7 +4,7 @@
     ViewData["Active"] = "Empleados";
 }
 <header class="header employee-heading">
-    <h1>Buscar empleados</h1>
+    <h1>Empleados</h1>
     <a asp-action="RegistrarEmpleado" class="btn btn-primary">Nuevo empleado</a>
 </header>
 <section class="card">
@@ -22,17 +22,24 @@
     </form>
 </section>
 
-@if (!Model.BusquedaAplicada || Model.Empleados.Count == 0)
-{
-    <p class="employee-empty">@(Model.BusquedaAplicada ? "No se encontraron empleados." : "Captura un filtro y pulsa Buscar para ver empleados.")</p>
-}
-else
-{
-    <section class="card">
-        <div class="table-wrap">
-            <table class="data-table">
-                <thead><tr><th>No. empleado</th><th>Nombre</th><th>Correo institucional</th><th>Estatus</th><th>Ingreso</th><th>Acciones</th></tr></thead>
-                <tbody>
+<section class="card">
+    <div class="section-header table-header"><h2>Directorio de empleados</h2><span class="badge-count">@Model.TotalEmpleados registros</span></div>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Correo institucional</th><th>Estatus</th><th>Ingreso</th><th>Acciones</th></tr></thead>
+            <tbody>
+            @if (Model.Empleados.Count == 0)
+            {
+                <tr>
+                    <td colspan="6">
+                        <p class="employee-empty">@( !string.IsNullOrWhiteSpace(Model.Q) || Model.Estatus is not null || Model.Numero.HasValue
+                            ? "No se encontraron empleados con esos filtros."
+                            : "Todavía no hay empleados registrados.")</p>
+                    </td>
+                </tr>
+            }
+            else
+            {
                 @foreach (var empleado in Model.Empleados)
                 {
                     var activo = empleado.Estatus == "ACTIVO";
@@ -58,25 +65,25 @@ else
                         </div></td>
                     </tr>
                 }
-                </tbody>
-            </table>
-        </div>
-        @if (Model.TotalPaginas > 1)
-        {
-            <nav class="pagination" aria-label="Paginación de empleados">
-                @if (Model.Pagina > 1)
-                {
-                    <a asp-action="Empleados" asp-route-pagina="@(Model.Pagina - 1)" asp-route-numero="@Model.Numero" asp-route-q="@Model.Q" asp-route-estatus="@Model.Estatus" class="btn btn-secondary">Anterior</a>
-                }
-                <span>Página @Model.Pagina de @Model.TotalPaginas</span>
-                @if (Model.Pagina < Model.TotalPaginas)
-                {
-                    <a asp-action="Empleados" asp-route-pagina="@(Model.Pagina + 1)" asp-route-numero="@Model.Numero" asp-route-q="@Model.Q" asp-route-estatus="@Model.Estatus" class="btn btn-secondary">Siguiente</a>
-                }
-            </nav>
-        }
-    </section>
-}
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav class="pagination" aria-label="Paginación de empleados">
+            @if (Model.Pagina > 1)
+            {
+                <a asp-action="Empleados" asp-route-pagina="@(Model.Pagina - 1)" asp-route-numero="@Model.Numero" asp-route-q="@Model.Q" asp-route-estatus="@Model.Estatus" class="btn btn-secondary">Anterior</a>
+            }
+            <span>Página @Model.Pagina de @Model.TotalPaginas</span>
+            @if (Model.Pagina < Model.TotalPaginas)
+            {
+                <a asp-action="Empleados" asp-route-pagina="@(Model.Pagina + 1)" asp-route-numero="@Model.Numero" asp-route-q="@Model.Q" asp-route-estatus="@Model.Estatus" class="btn btn-secondary">Siguiente</a>
+            }
+        </nav>
+    }
+</section>
 <dialog class="user-dialog" id="delete-employee">
     <h2>Eliminar empleado</h2>
     <p>Se eliminarán definitivamente los datos, domicilios y cursos de <strong id="delete-name"></strong>.</p>

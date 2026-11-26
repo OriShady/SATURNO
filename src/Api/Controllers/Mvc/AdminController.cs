@@ -10,42 +10,46 @@ namespace NoSqlU.Api.Controllers.Mvc;
 
 public class AdminController : Controller
 {
+    private const int PageSize = 5;
     private readonly SaturnoStore _db;
 
     public AdminController(SaturnoStore db) => _db = db;
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pagina = 1)
     {
         var model = new DashboardViewModel
         {
             TotalCursos = await _db.Cursos.Query.CountAsync(),
             TotalCategorias = await _db.Categorias.Query.CountAsync(),
-            CursosActivos = await _db.Cursos.Query.CountAsync(c => c.Estatus == "activo"),
-            Cursos = (await _db.CargarCursosAsync()).OrderByDescending(c => c.FechaCreacion).ToList()
+            CursosActivos = await _db.Cursos.Query.CountAsync(c => c.Estatus == "activo")
         };
+        model.TotalCursosRegistrados = model.TotalCursos;
+        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling((double)model.TotalCursosRegistrados / PageSize));
+        model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
+        model.Cursos = await _db.CargarCursosAsync(pagina: model.Pagina, tamanoPagina: PageSize);
 
         return View(model);
     }
 
     [HttpGet]
-    public async Task<IActionResult> Categorias()
+    public async Task<IActionResult> Categorias(int pagina = 1)
     {
-        return View(await BuildCategoriasViewModelAsync());
+        return View(await BuildCategoriasViewModelAsync(pagina: pagina));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CrearCategoria(CategoriaCreateViewModel nuevaCategoria)
+    public async Task<IActionResult> CrearCategoria(CategoriaCreateViewModel nuevaCategoria, int pagina = 1)
     {
         if (!ModelState.IsValid)
-            return View("Categorias", await BuildCategoriasViewModelAsync(nuevaCategoria));
+            return View("Categorias", await BuildCategoriasViewModelAsync(nuevaCategoria, pagina));
 
         var nombre = nuevaCategoria.Nombre.Trim();
         if (await _db.Categorias.Query.AnyAsync(c => c.Nombre == nombre))
         {
             ModelState.AddModelError(nameof(nuevaCategoria.Nombre), "Ya existe una categoría con ese nombre.");
-            return View("Categorias", await BuildCategoriasViewModelAsync(nuevaCategoria));
+            return View("Categorias", await BuildCategoriasViewModelAsync(nuevaCategoria, pagina));
         }
 
         await _db.Categorias.InsertAsync(new Categoria
@@ -56,19 +60,19 @@ public class AdminController : Controller
             FechaCreacion = DateTime.UtcNow
         });
         TempData["Mensaje"] = "Categoría creada correctamente.";
-        return RedirectToAction(nameof(Categorias));
+        return RedirectToAction(nameof(Categorias), new { pagina });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarCategoriaEstatus(int id)
+    public async Task<IActionResult> CambiarCategoriaEstatus(int id, int pagina = 1)
     {
         var categoria = await _db.Categorias.FindAsync(id);
         if (categoria is null) return NotFound();
 
         categoria.Estatus = categoria.Estatus == "activo" ? "inactivo" : "activo";
         await _db.Categorias.ReplaceAsync(categoria);
-        return RedirectToAction(nameof(Categorias));
+        return RedirectToAction(nameof(Categorias), new { pagina });
     }
 
     [HttpGet]
@@ -155,18 +159,36 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Buscar(BuscarCursosViewModel model)
+    public async Task<IActionResult> Buscar(BuscarCursosViewModel model, int pagina = 1)
     {
-        var query = (await _db.CargarCursosAsync()).AsEnumerable();
+        var query = _db.Cursos.Query;
 
         if (!string.IsNullOrWhiteSpace(model.Q))
             query = query.Where(c => c.Nombre.Contains(model.Q) || c.Descripcion.Contains(model.Q));
         if (!string.IsNullOrWhiteSpace(model.Categoria))
-            query = query.Where(c => c.Categoria?.Nombre == model.Categoria);
+        {
+            var categoriaId = await _db.Categorias.Query
+                .Where(c => c.Nombre == model.Categoria)
+                .Select(c => c.Id)
+                .FirstOrDefaultAsync();
+            query = query.Where(c => c.CategoriaId == categoriaId);
+        }
         if (!string.IsNullOrWhiteSpace(model.Nivel))
-            query = query.Where(c => c.Nivel?.Nombre == model.Nivel);
+        {
+            var nivelId = await _db.Niveles.Query
+                .Where(n => n.Nombre == model.Nivel)
+                .Select(n => n.Id)
+                .FirstOrDefaultAsync();
+            query = query.Where(c => c.NivelId == nivelId);
+        }
         if (!string.IsNullOrWhiteSpace(model.Instructor))
-            query = query.Where(c => c.Instructor?.Nombre == model.Instructor);
+        {
+            var instructorId = await _db.Instructores.Query
+                .Where(i => i.Nombre == model.Instructor)
+                .Select(i => i.Id)
+                .FirstOrDefaultAsync();
+            query = query.Where(c => c.InstructorId == instructorId);
+        }
         if (!string.IsNullOrWhiteSpace(model.Estatus))
             query = query.Where(c => c.Estatus == model.Estatus);
         if (model.Min.HasValue)
@@ -177,7 +199,10 @@ public class AdminController : Controller
         model.Categorias = await _db.Categorias.Query.Where(c => c.Estatus == "activo").OrderBy(c => c.Nombre).ToListAsync();
         model.Niveles = await _db.Niveles.Query.Where(n => n.Estatus == "activo").OrderBy(n => n.Nombre).ToListAsync();
         model.Instructores = await _db.Instructores.Query.Where(i => i.Estatus == "activo").OrderBy(i => i.Nombre).ToListAsync();
-        model.Resultados = query.OrderBy(c => c.Nombre).ToList();
+        model.TotalResultados = await query.CountAsync();
+        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling((double)model.TotalResultados / PageSize));
+        model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
+        model.Resultados = await _db.CargarCursosAsync(query, model.Pagina, PageSize);
         return View(model);
     }
 
@@ -581,13 +606,19 @@ public class AdminController : Controller
         return RedirectToAction(nameof(DetalleUsuario), new { id = model.UsuarioId });
     }
 
-    private async Task<CategoriasViewModel> BuildCategoriasViewModelAsync(CategoriaCreateViewModel? nueva = null)
+    private async Task<CategoriasViewModel> BuildCategoriasViewModelAsync(
+        CategoriaCreateViewModel? nueva = null, int pagina = 1)
     {
-        return new CategoriasViewModel
+        var query = _db.Categorias.Query.OrderBy(c => c.Nombre);
+        var model = new CategoriasViewModel
         {
-            NuevaCategoria = nueva ?? new CategoriaCreateViewModel(),
-            Categorias = await _db.Categorias.Query.OrderBy(c => c.Nombre).ToListAsync()
+            NuevaCategoria = nueva ?? new CategoriaCreateViewModel()
         };
+        model.TotalCategorias = await query.CountAsync();
+        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling((double)model.TotalCategorias / PageSize));
+        model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
+        model.Categorias = await query.Skip((model.Pagina - 1) * PageSize).Take(PageSize).ToListAsync();
+        return model;
     }
 
     private async Task<CursoCreateViewModel> BuildCursoViewModelAsync(CursoCreateViewModel model)
@@ -601,6 +632,7 @@ public class AdminController : Controller
     private async Task<RegistroUsuarioViewModel> BuildRegistroViewModelAsync(RegistroUsuarioViewModel model)
     {
         model.Estados = await _db.Estados.Query.Where(e => e.Estatus == "ACTIVO").OrderBy(e => e.NombreEstado).ToListAsync();
+        model.Sexos = await _db.Sexos.Query.Where(s => s.Estatus == "ACTIVO").OrderBy(s => s.Descripcion).ToListAsync();
         return model;
     }
 
@@ -623,16 +655,13 @@ public class AdminController : Controller
     private async Task<EmpleadosViewModel> BuildEmpleadosViewModelAsync(string? q, string? estatus, int pagina, int? numero)
     {
         var model = new EmpleadosViewModel { Q = q, Numero = numero, Estatus = estatus };
-        if (string.IsNullOrWhiteSpace(q) && estatus is null && numero is null) return model;
 
-        model.BusquedaAplicada = true;
-        const int tamanoPagina = 8;
         var query = _db.FiltrarEmpleados(q, numero, estatus);
         model.TotalEmpleados = await query.CountAsync();
-        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling((double)model.TotalEmpleados / tamanoPagina));
+        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling((double)model.TotalEmpleados / PageSize));
         model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
-        model.Empleados = await query.OrderBy(u => u.Id).Skip((model.Pagina - 1) * tamanoPagina)
-            .Take(tamanoPagina).ToListAsync();
+        model.Empleados = await query.OrderBy(u => u.Id).Skip((model.Pagina - 1) * PageSize)
+            .Take(PageSize).ToListAsync();
         return model;
     }
 
@@ -653,7 +682,6 @@ public class AdminController : Controller
         bool mostrarFormulario = false,
         int pagina = 1)
     {
-        const int tamanoPagina = 8;
         var model = new CatalogosViewModel
         {
             Tipo = tipo,
@@ -670,13 +698,13 @@ public class AdminController : Controller
                 model.TotalElementos = await _db.Estados.Query.CountAsync();
                 break;
         }
-        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling(model.TotalElementos / (double)tamanoPagina));
+        model.TotalPaginas = Math.Max(1, (int)Math.Ceiling(model.TotalElementos / (double)PageSize));
         model.Pagina = Math.Clamp(pagina, 1, model.TotalPaginas);
         switch (tipo)
         {
             case "sexos":
                 var sexos = await _db.Sexos.Query.OrderBy(s => s.Descripcion)
-                    .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina).ToListAsync();
+                    .Skip((model.Pagina - 1) * PageSize).Take(PageSize).ToListAsync();
                 model.Elementos = sexos.Select(s => new CatalogoFilaViewModel
                     { Clave = s.Id.ToString(), Nombre = s.Descripcion, Estatus = s.Estatus }).ToList();
                 if (elemento is null && !string.IsNullOrWhiteSpace(editar) && char.TryParse(editar, out var claveSexo))
@@ -688,7 +716,7 @@ public class AdminController : Controller
                 break;
             case "estados":
                 model.Elementos = await _db.Estados.Query.OrderBy(e => e.NombreEstado)
-                    .Skip((model.Pagina - 1) * tamanoPagina).Take(tamanoPagina)
+                    .Skip((model.Pagina - 1) * PageSize).Take(PageSize)
                     .Select(e => new CatalogoFilaViewModel { Clave = e.Id.ToString(), Nombre = e.NombreEstado, Estatus = e.Estatus }).ToListAsync();
                 if (elemento is null && int.TryParse(editar, out var idEstado))
                 {
