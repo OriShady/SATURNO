@@ -2,47 +2,103 @@
 @{
     ViewData["Title"] = "Detalles del empleado";
     ViewData["Active"] = "Empleados";
+    var nombreCompleto = $"{Model.Nombres} {Model.ApellidoPaterno} {Model.ApellidoMaterno}".Trim();
+    var activo = Model.Estatus == "ACTIVO";
 }
-<header class="header employee-heading">
-    <h1>@Model.Nombres @Model.ApellidoPaterno @Model.ApellidoMaterno</h1>
-    <a asp-action="EditarEmpleado" asp-route-id="@Model.Id" class="btn btn-primary">Editar empleado</a>
+<header class="header employee-page-header employee-detail-header">
+    <div class="employee-heading-copy">
+        <span class="employee-eyebrow">FICHA DEL EMPLEADO · #@Model.Id</span>
+        <h1>@nombreCompleto</h1>
+        <p>Información personal, domicilio y cursos registrados.</p>
+    </div>
+    <div class="employee-detail-actions">
+        <span class="status @(activo ? "activo" : "inactivo")">@(activo ? "Activo" : "Inactivo")</span>
+        <a asp-action="Empleados" asp-route-numero="@Model.Id" class="btn btn-secondary">Volver al directorio</a>
+        <a asp-action="EditarEmpleado" asp-route-id="@Model.Id" class="btn btn-primary employee-detail-edit">Editar empleado</a>
+    </div>
 </header>
-<section class="card">
-    <h2>Datos</h2>
-    <dl class="user-detail-grid">
-        <div><dt>Número de empleado</dt><dd>@Model.Id</dd></div>
-        <div><dt>Fecha de nacimiento</dt><dd>@Model.FechaNacimiento.ToString("dd/MM/yyyy")</dd></div>
-        <div><dt>Fecha de ingreso</dt><dd>@Model.FechaRegistro.ToString("dd/MM/yyyy")</dd></div>
-        <div><dt>Sexo</dt><dd>@(Model.Sexo?.Descripcion ?? "—")</dd></div>
-        <div><dt>Correo institucional</dt><dd>@Model.CorreoEmpresarial</dd></div>
-        <div><dt>Celular</dt><dd>@(Model.Telefono ?? "—")</dd></div>
-        <div><dt>Estatus</dt><dd>@(Model.Estatus == "ACTIVO" ? "Activo" : "Inactivo")</dd></div>
+
+<section class="card employee-detail-card">
+    <div class="detail-heading employee-detail-heading">
+        <span class="detail-avatar employee-detail-avatar" aria-hidden="true">ID</span>
+        <div>
+            <span class="employee-eyebrow">INFORMACIÓN PERSONAL</span>
+            <h2>Datos generales</h2>
+        </div>
+    </div>
+    <dl class="user-detail-grid employee-detail-grid">
+        <div class="employee-detail-item"><dt>Número de empleado</dt><dd class="employee-detail-number">#@Model.Id</dd></div>
+        <div class="employee-detail-item"><dt>Fecha de nacimiento</dt><dd>@Model.FechaNacimiento.ToString("dd/MM/yyyy")</dd></div>
+        <div class="employee-detail-item"><dt>Fecha de ingreso</dt><dd>@Model.FechaRegistro.ToString("dd/MM/yyyy")</dd></div>
+        <div class="employee-detail-item"><dt>Sexo</dt><dd>@(Model.Sexo?.Descripcion ?? "—")</dd></div>
+        <div class="employee-detail-item employee-detail-item-wide"><dt>Correo institucional</dt><dd>@Model.CorreoEmpresarial</dd></div>
+        <div class="employee-detail-item"><dt>Celular</dt><dd>@(Model.Telefono ?? "—")</dd></div>
     </dl>
 </section>
-<section class="card">
-    <h2>Domicilio</h2>
-    @foreach (var direccion in Model.Direcciones)
+
+<section class="card employee-detail-card">
+    <div class="employee-detail-section-heading">
+        <div>
+            <span class="employee-eyebrow">UBICACIÓN</span>
+            <h2>Domicilio</h2>
+        </div>
+        <span class="employee-detail-count">@Model.Direcciones.Count</span>
+    </div>
+    @if (Model.Direcciones.Count == 0)
     {
-        <p>@direccion.Calle @direccion.NumeroExterior @direccion.NumeroInterior, C. P. @direccion.CodigoPostal, @direccion.Estado?.NombreEstado</p>
-    }
-</section>
-<section class="card">
-    <h2>Cursos</h2>
-    @if (Model.CursosUsuarios.Count == 0)
-    {
-        <p>Sin cursos registrados.</p>
+        <div class="employee-detail-empty">No hay domicilios registrados para este empleado.</div>
     }
     else
     {
-        <div class="table-wrap"><table class="data-table">
-            <thead><tr><th>Curso</th><th>Duración (minutos)</th><th>Inicio</th><th>Entrega de constancia</th></tr></thead>
-            <tbody>
-            @foreach (var curso in Model.CursosUsuarios)
+        <div class="employee-address-grid">
+            @{ var numeroDireccion = 0; }
+            @foreach (var direccion in Model.Direcciones)
             {
-                <tr><td>@curso.NombreCurso</td><td>@(curso.DuracionMinutos?.ToString() ?? "—")</td><td>@(curso.FechaInicio?.ToString("dd/MM/yyyy") ?? "—")</td><td>@((curso.FechaEntregaConstancia ?? curso.FechaFinalizacion)?.ToString("dd/MM/yyyy") ?? "—")</td></tr>
+                numeroDireccion++;
+                <article class="employee-address-card">
+                    <span class="employee-address-label">Domicilio @numeroDireccion.ToString("00")</span>
+                    <h3>@direccion.Calle @direccion.NumeroExterior</h3>
+                    @if (!string.IsNullOrWhiteSpace(direccion.NumeroInterior))
+                    {
+                        <p>Interior @direccion.NumeroInterior</p>
+                    }
+                    <p>@(direccion.Colonia ?? "Colonia no especificada") · C. P. @direccion.CodigoPostal</p>
+                    <p>@(direccion.Municipio ?? "Municipio no especificado"), @(direccion.Estado?.NombreEstado ?? "Estado no especificado")</p>
+                </article>
             }
-            </tbody>
-        </table></div>
+        </div>
     }
 </section>
-<a asp-action="Empleados" asp-route-numero="@Model.Id" class="btn btn-secondary">Volver a empleados</a>
+
+<section class="card employee-detail-card">
+    <div class="employee-detail-section-heading">
+        <div>
+            <span class="employee-eyebrow">DESARROLLO PROFESIONAL</span>
+            <h2>Cursos y constancias</h2>
+        </div>
+        <span class="employee-detail-count">@Model.CursosUsuarios.Count</span>
+    </div>
+    @if (Model.CursosUsuarios.Count == 0)
+    {
+        <div class="employee-detail-empty">Todavía no hay cursos registrados para este empleado.</div>
+    }
+    else
+    {
+        <div class="table-wrap employee-detail-table-wrap">
+            <table class="data-table employee-table employee-detail-table">
+                <thead><tr><th>Curso</th><th>Duración</th><th>Inicio</th><th>Entrega de constancia</th></tr></thead>
+                <tbody>
+                @foreach (var curso in Model.CursosUsuarios)
+                {
+                    <tr>
+                        <td>@curso.NombreCurso</td>
+                        <td>@(curso.DuracionMinutos?.ToString() is string duracion ? $"{duracion} min" : "—")</td>
+                        <td>@(curso.FechaInicio?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>@((curso.FechaEntregaConstancia ?? curso.FechaFinalizacion)?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

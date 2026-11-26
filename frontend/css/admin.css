@@ -2385,3 +2385,49 @@ body {
   .employee-page-header { padding: 20px; }
   .employee-edit-card .employee-steps .btn { flex-basis: 100%; }
 }
+
+.employee-detail-header { align-items: center; }
+.employee-detail-header .employee-heading-copy h1 { overflow-wrap: anywhere; }
+.employee-detail-header .employee-eyebrow { margin-bottom: 8px; }
+.employee-detail-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
+.employee-detail-actions .status { min-width: 78px; padding: 7px 12px; border-radius: 999px; text-align: center; }
+.employee-detail-actions .employee-detail-edit { border: 1px solid rgba(153, 119, 53, .28); background: linear-gradient(135deg, #d9c28b, #c4a35f); color: #352e43; box-shadow: 0 7px 18px rgba(139, 108, 53, .16); }
+.employee-detail-actions .employee-detail-edit:hover { background: linear-gradient(135deg, #e2d0a6, #cfb276); }
+.employee-detail-card { padding: 26px; border-color: #d3c9b5; background: linear-gradient(145deg, #f8f5ed, #eee9f2); }
+.employee-detail-heading { margin-bottom: 22px; }
+.employee-detail-heading h2,
+.employee-detail-section-heading h2 { margin: 0; color: #443a5c; font-size: 19px; }
+.employee-detail-avatar { width: 52px; height: 52px; flex-basis: 52px; border-color: #d7c69f; border-radius: 16px; background: linear-gradient(145deg, #efe6d2, #e7e0ec); color: #806737; font-size: 15px; font-weight: 800; }
+.employee-detail-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.employee-detail-item { min-width: 0; padding: 14px 16px; border: 1px solid #e1d9c9; border-radius: 13px; background: rgba(255, 255, 255, .66); }
+.employee-detail-item dt { margin-bottom: 7px; color: #81788b; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.employee-detail-item dd { color: #433b53; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.employee-detail-item-wide { grid-column: span 2; }
+.employee-detail-number { color: #806737 !important; }
+.employee-detail-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding-bottom: 15px; border-bottom: 1px solid rgba(161, 137, 89, .24); }
+.employee-detail-count { display: inline-grid; min-width: 34px; height: 34px; place-items: center; padding: 0 9px; border: 1px solid #dfd1af; border-radius: 999px; background: #f0e8d7; color: #725b30; font-size: 12px; font-weight: 800; }
+.employee-address-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.employee-address-card { padding: 18px; border: 1px solid #dcd3e2; border-radius: 15px; background: linear-gradient(135deg, rgba(255, 255, 255, .74), rgba(235, 230, 240, .82)); }
+.employee-address-label { display: inline-block; margin-bottom: 10px; color: #94763f; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.employee-address-card h3 { margin-bottom: 8px; color: #443a5c; font-size: 16px; overflow-wrap: anywhere; }
+.employee-address-card p { margin-top: 5px; color: #6f687d; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.employee-detail-empty { padding: 24px; border: 1px dashed #d1c7d9; border-radius: 13px; background: rgba(255, 255, 255, .45); color: #716981; text-align: center; }
+.employee-detail-table-wrap { overflow-x: auto; border: 1px solid #d9d1e1; border-radius: 14px; }
+.employee-detail-table { min-width: 620px; }
+.employee-detail-table th { background: linear-gradient(100deg, #e5ddcb, #ded8e8); color: #5a506d; }
+.employee-detail-table tbody tr:nth-child(odd) { background: rgba(249, 247, 250, .78); }
+.employee-detail-table tbody tr:nth-child(even) { background: rgba(235, 230, 239, .72); }
+.employee-detail-table tbody tr:hover { background: #eee7d9; }
+
+@media (max-width: 760px) {
+  .employee-detail-header { align-items: flex-start; }
+  .employee-detail-actions { justify-content: flex-start; }
+  .employee-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .employee-detail-card { padding: 20px; }
+  .employee-detail-grid { grid-template-columns: 1fr; }
+  .employee-detail-item-wide { grid-column: auto; }
+  .employee-detail-actions { width: 100%; }
+  .employee-detail-actions .btn { flex: 1 1 100%; text-align: center; }
+}
