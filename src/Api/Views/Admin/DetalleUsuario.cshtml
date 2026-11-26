@@ -1,4 +1,4 @@
-@model Usuario
+@model EmpleadoDetalleViewModel
 @{
     ViewData["Title"] = "Detalles del empleado";
     ViewData["Active"] = "Empleados";
@@ -30,7 +30,7 @@
         <div class="employee-detail-item"><dt>Número de empleado</dt><dd class="employee-detail-number">#@Model.Id</dd></div>
         <div class="employee-detail-item"><dt>Fecha de nacimiento</dt><dd>@Model.FechaNacimiento.ToString("dd/MM/yyyy")</dd></div>
         <div class="employee-detail-item"><dt>Fecha de ingreso</dt><dd>@Model.FechaRegistro.ToString("dd/MM/yyyy")</dd></div>
-        <div class="employee-detail-item"><dt>Sexo</dt><dd>@(Model.Sexo?.Descripcion ?? "—")</dd></div>
+        <div class="employee-detail-item"><dt>Sexo</dt><dd>@(Model.Sexo ?? "—")</dd></div>
         <div class="employee-detail-item employee-detail-item-wide"><dt>Correo institucional</dt><dd>@Model.CorreoEmpresarial</dd></div>
         <div class="employee-detail-item"><dt>Celular</dt><dd>@(Model.Telefono ?? "—")</dd></div>
     </dl>
@@ -63,7 +63,7 @@
                         <p>Interior @direccion.NumeroInterior</p>
                     }
                     <p>@(direccion.Colonia ?? "Colonia no especificada") · C. P. @direccion.CodigoPostal</p>
-                    <p>@(direccion.Municipio ?? "Municipio no especificado"), @(direccion.Estado?.NombreEstado ?? "Estado no especificado")</p>
+                    <p>@(direccion.Municipio ?? "Municipio no especificado"), @(direccion.Estado ?? "Estado no especificado")</p>
                 </article>
             }
         </div>
@@ -94,7 +94,7 @@
                         <td>@curso.NombreCurso</td>
                         <td>@(curso.DuracionMinutos?.ToString() is string duracion ? $"{duracion} min" : "—")</td>
                         <td>@(curso.FechaInicio?.ToString("dd/MM/yyyy") ?? "—")</td>
-                        <td>@((curso.FechaEntregaConstancia ?? curso.FechaFinalizacion)?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>@(curso.FechaEntregaConstancia?.ToString("dd/MM/yyyy") ?? "—")</td>
                     </tr>
                 }
                 </tbody>

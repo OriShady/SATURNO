@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using NoSqlU.Data;
+using NoSqlU.Api.Models;
 
 namespace NoSqlU.Api.Controllers;
 
@@ -8,21 +8,11 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class HealthController : ControllerBase
 {
-    private readonly SaturnoStore _db;
-    public HealthController(SaturnoStore db) => _db = db;
+    private readonly HealthModel _model;
+
+    public HealthController(HealthModel model) => _model = model;
 
     [HttpGet]
-    public async Task<IActionResult> Get()
-    {
-        try
-        {
-            var canConnect = await _db.CanConnectAsync();
-            if (canConnect) return Ok(new { db = "ok" });
-            return StatusCode(503, new { db = "unavailable" });
-        }
-        catch (Exception e)
-        {
-            return StatusCode(500, new { db = "error", detail = e.Message });
-        }
-    }
+    public async Task<IActionResult> Get() =>
+        (await _model.GetAsync()).ToActionResult(this);
 }

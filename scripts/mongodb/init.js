@@ -103,6 +103,7 @@ seed("sexos", [
   { _id: "F", nombre: "Femenino", estatus: "ACTIVO" },
   { _id: "X", nombre: "Otro", estatus: "ACTIVO" }
 ]);
+
 db.sexos.updateOne({ _id: "X" }, { $set: { nombre: "Otro" } });
 
 const estadosMexico = [

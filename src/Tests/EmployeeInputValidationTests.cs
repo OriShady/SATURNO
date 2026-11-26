@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using NoSqlU.Api.Controllers;
+using NoSqlU.Api.Models;
 using NoSqlU.Api.Models.ViewModels;
 using Xunit;
 

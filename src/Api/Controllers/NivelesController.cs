@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver.Linq;
-using NoSqlU.Data;
-using NoSqlU.Data.Entities;
+using NoSqlU.Api.Models;
 
 namespace NoSqlU.Api.Controllers;
 
@@ -9,47 +7,27 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class NivelesController : ControllerBase
 {
-    private readonly SaturnoStore _db;
-    public NivelesController(SaturnoStore db) => _db = db;
+    private readonly NivelesModel _model;
+
+    public NivelesController(NivelesModel model) => _model = model;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _db.Niveles.Query.ToListAsync());
+    public async Task<IActionResult> GetAll() =>
+        (await _model.GetAllAsync()).ToActionResult(this);
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> Get(int id)
-    {
-        var entity = await _db.Niveles.FindAsync(id);
-        if (entity == null) return NotFound();
-        return Ok(entity);
-    }
+    public async Task<IActionResult> Get(int id) =>
+        (await _model.GetAsync(id)).ToActionResult(this);
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Nivel model)
-    {
-        model.FechaCreacion = DateTime.UtcNow;
-        await _db.Niveles.InsertAsync(model);
-        return CreatedAtAction(nameof(Get), new { id = model.Id }, model);
-    }
+    public async Task<IActionResult> Create([FromBody] NivelInput model) =>
+        (await _model.CreateAsync(model)).ToActionResult(this, nameof(Get));
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] Nivel model)
-    {
-        var existing = await _db.Niveles.FindAsync(id);
-        if (existing == null) return NotFound();
-        existing.Nombre = model.Nombre;
-        existing.Estatus = model.Estatus;
-        await _db.Niveles.ReplaceAsync(existing);
-        return NoContent();
-    }
+    public async Task<IActionResult> Update(int id, [FromBody] NivelInput model) =>
+        (await _model.UpdateAsync(id, model)).ToActionResult(this);
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var existing = await _db.Niveles.FindAsync(id);
-        if (existing == null) return NotFound();
-        if (await _db.Cursos.Query.AnyAsync(c => c.NivelId == id))
-            return Conflict(new { error = "El nivel está asociado a uno o más cursos." });
-        await _db.Niveles.DeleteAsync(id);
-        return NoContent();
-    }
+    public async Task<IActionResult> Delete(int id) =>
+        (await _model.DeleteAsync(id)).ToActionResult(this);
 }

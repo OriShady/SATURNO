@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using NoSqlU.Api.Models;
 using NoSqlU.Data;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
@@ -39,23 +40,34 @@ var mongoDatabase = builder.Configuration["MongoDB:Database"] ?? "SaturnoMongo";
 builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoUri));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IMongoClient>().GetDatabase(mongoDatabase));
 builder.Services.AddSingleton<SaturnoStore>();
+builder.Services.AddScoped<AdminModel>();
+builder.Services.AddScoped<SesionModel>();
+builder.Services.AddScoped<UsuariosModel>();
+builder.Services.AddScoped<CursosModel>();
+builder.Services.AddScoped<CategoriasModel>();
+builder.Services.AddScoped<InstructoresModel>();
+builder.Services.AddScoped<NivelesModel>();
+builder.Services.AddScoped<FiltroModel>();
+builder.Services.AddScoped<HealthModel>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
+{
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await context.Response.WriteAsJsonAsync(new { error = "Ocurrió un error interno." });
+}));
 
 var adminInicial = builder.Configuration["AdministradorInicial:Usuario"]?.Trim().ToLowerInvariant();
 var claveInicial = builder.Configuration["AdministradorInicial:Password"];
 if (!string.IsNullOrWhiteSpace(adminInicial) && !string.IsNullOrWhiteSpace(claveInicial))
 {
     using var scope = app.Services.CreateScope();
-    var administrador = new Administrador { Usuario = adminInicial };
-    administrador.PasswordHash = scope.ServiceProvider.GetRequiredService<IPasswordHasher<Administrador>>()
-        .HashPassword(administrador, claveInicial);
-    await scope.ServiceProvider.GetRequiredService<SaturnoStore>().CrearAdministradorInicialAsync(administrador);
+    await scope.ServiceProvider.GetRequiredService<SesionModel>().CrearAdministradorInicialAsync(adminInicial, claveInicial);
 }
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }

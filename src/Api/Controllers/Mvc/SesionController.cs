@@ -2,23 +2,16 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using NoSqlU.Data;
-using NoSqlU.Data.Entities;
+using NoSqlU.Api.Models;
 
 namespace NoSqlU.Api.Controllers.Mvc;
 
 public sealed class SesionController : Controller
 {
-    private readonly SaturnoStore store;
-    private readonly IPasswordHasher<Administrador> hasher;
+    private readonly SesionModel _model;
 
-    public SesionController(SaturnoStore store, IPasswordHasher<Administrador> hasher)
-    {
-        this.store = store;
-        this.hasher = hasher;
-    }
+    public SesionController(SesionModel model) => _model = model;
 
     [HttpGet, AllowAnonymous]
     public IActionResult Entrar() => User.Identity?.IsAuthenticated == true
@@ -28,17 +21,15 @@ public sealed class SesionController : Controller
     [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
     public async Task<IActionResult> Entrar(string usuario, string password)
     {
-        var administrador = string.IsNullOrWhiteSpace(usuario) ? null :
-            await store.BuscarAdministradorAsync(usuario.Trim().ToLowerInvariant());
-        if (administrador is null || string.IsNullOrEmpty(password) ||
-            hasher.VerifyHashedPassword(administrador, administrador.PasswordHash, password) == PasswordVerificationResult.Failed)
+        var administrador = await _model.AutenticarAsync(usuario, password);
+        if (administrador is null)
         {
             ModelState.AddModelError(string.Empty, "Usuario o contraseña incorrectos.");
             return View();
         }
 
         var scheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, administrador.Usuario) }, scheme);
+        var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, administrador) }, scheme);
         await HttpContext.SignInAsync(scheme, new ClaimsPrincipal(identity));
         return RedirectToAction("Empleados", "Admin");
     }

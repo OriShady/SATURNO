@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using NoSqlU.Data.Entities;
 using NoSqlU.Api.Models.Validation;
 
 namespace NoSqlU.Api.Models.ViewModels;
@@ -12,7 +11,7 @@ public class DashboardViewModel
     public int TotalCursosRegistrados { get; set; }
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
-    public IReadOnlyList<Curso> Cursos { get; set; } = Array.Empty<Curso>();
+    public IReadOnlyList<CursoDto> Cursos { get; set; } = Array.Empty<CursoDto>();
 }
 
 public class CategoriaCreateViewModel
@@ -31,7 +30,7 @@ public class CategoriasViewModel
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
     public int TotalCategorias { get; set; }
-    public IReadOnlyList<Categoria> Categorias { get; set; } = Array.Empty<Categoria>();
+    public IReadOnlyList<CategoriaDto> Categorias { get; set; } = Array.Empty<CategoriaDto>();
 }
 
 public class CursoCreateViewModel
@@ -63,9 +62,9 @@ public class CursoCreateViewModel
     [StringLength(150)]
     public string Instructor { get; set; } = string.Empty;
 
-    public IReadOnlyList<Categoria> Categorias { get; set; } = Array.Empty<Categoria>();
-    public IReadOnlyList<Nivel> Niveles { get; set; } = Array.Empty<Nivel>();
-    public IReadOnlyList<Instructor> Instructores { get; set; } = Array.Empty<Instructor>();
+    public IReadOnlyList<CategoriaDto> Categorias { get; set; } = Array.Empty<CategoriaDto>();
+    public IReadOnlyList<NivelDto> Niveles { get; set; } = Array.Empty<NivelDto>();
+    public IReadOnlyList<InstructorDto> Instructores { get; set; } = Array.Empty<InstructorDto>();
 }
 
 public class BuscarCursosViewModel
@@ -80,10 +79,10 @@ public class BuscarCursosViewModel
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
     public int TotalResultados { get; set; }
-    public IReadOnlyList<Categoria> Categorias { get; set; } = Array.Empty<Categoria>();
-    public IReadOnlyList<Nivel> Niveles { get; set; } = Array.Empty<Nivel>();
-    public IReadOnlyList<Instructor> Instructores { get; set; } = Array.Empty<Instructor>();
-    public IReadOnlyList<Curso> Resultados { get; set; } = Array.Empty<Curso>();
+    public IReadOnlyList<CategoriaDto> Categorias { get; set; } = Array.Empty<CategoriaDto>();
+    public IReadOnlyList<NivelDto> Niveles { get; set; } = Array.Empty<NivelDto>();
+    public IReadOnlyList<InstructorDto> Instructores { get; set; } = Array.Empty<InstructorDto>();
+    public IReadOnlyList<CursoDto> Resultados { get; set; } = Array.Empty<CursoDto>();
 }
 
 public class RegistroUsuarioViewModel
@@ -123,8 +122,8 @@ public class RegistroUsuarioViewModel
     public string Colonia { get; set; } = string.Empty;
     [Required, StringLength(100)]
     public string Municipio { get; set; } = string.Empty;
-    public IReadOnlyList<Estado> Estados { get; set; } = Array.Empty<Estado>();
-    public IReadOnlyList<Sexo> Sexos { get; set; } = Array.Empty<Sexo>();
+    public IReadOnlyList<EstadoDto> Estados { get; set; } = Array.Empty<EstadoDto>();
+    public IReadOnlyList<SexoDto> Sexos { get; set; } = Array.Empty<SexoDto>();
 }
 
 public class AsignarCursoViewModel
@@ -134,7 +133,7 @@ public class AsignarCursoViewModel
     public string CorreoUsuario { get; set; } = string.Empty;
     [Range(1, int.MaxValue, ErrorMessage = "Selecciona un curso.")]
     public int CursoId { get; set; }
-    public IReadOnlyList<Curso> Cursos { get; set; } = Array.Empty<Curso>();
+    public IReadOnlyList<CursoDto> Cursos { get; set; } = Array.Empty<CursoDto>();
 }
 
 public class EmpleadosViewModel
@@ -145,7 +144,7 @@ public class EmpleadosViewModel
     public int Pagina { get; set; } = 1;
     public int TotalPaginas { get; set; } = 1;
     public int TotalEmpleados { get; set; }
-    public IReadOnlyList<Usuario> Empleados { get; set; } = Array.Empty<Usuario>();
+    public IReadOnlyList<EmpleadoFilaViewModel> Empleados { get; set; } = Array.Empty<EmpleadoFilaViewModel>();
 }
 
 public class EmpleadoFormViewModel
@@ -186,8 +185,8 @@ public class EmpleadoFormViewModel
     public string CodigoPostal { get; set; } = string.Empty;
 
     public List<CursoEmpleadoFormViewModel> Cursos { get; set; } = new();
-    public IReadOnlyList<Estado> Estados { get; set; } = Array.Empty<Estado>();
-    public IReadOnlyList<Sexo> Sexos { get; set; } = Array.Empty<Sexo>();
+    public IReadOnlyList<EstadoDto> Estados { get; set; } = Array.Empty<EstadoDto>();
+    public IReadOnlyList<SexoDto> Sexos { get; set; } = Array.Empty<SexoDto>();
 }
 
 public class CursoEmpleadoFormViewModel

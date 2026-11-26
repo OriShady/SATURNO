@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using NoSqlU.Data;
+using NoSqlU.Api.Models;
 
 namespace NoSqlU.Api.Controllers;
 
@@ -7,8 +7,9 @@ namespace NoSqlU.Api.Controllers;
 [Route("api/[controller]")]
 public class FiltroController : ControllerBase
 {
-    private readonly SaturnoStore _db;
-    public FiltroController(SaturnoStore db) => _db = db;
+    private readonly FiltroModel _model;
+
+    public FiltroController(FiltroModel model) => _model = model;
 
     [HttpGet("buscar")]
     public async Task<IActionResult> Buscar(
@@ -18,33 +19,6 @@ public class FiltroController : ControllerBase
         [FromQuery] string? instructor,
         [FromQuery] string? estatus,
         [FromQuery] decimal? min,
-        [FromQuery] decimal? max)
-    {
-        var query = (await _db.CargarCursosAsync()).AsEnumerable();
-
-        if (!string.IsNullOrWhiteSpace(q))
-            query = query.Where(c =>
-                c.Nombre.Contains(q) ||
-                c.Descripcion.Contains(q));
-
-        if (!string.IsNullOrWhiteSpace(categoria))
-            query = query.Where(c => c.Categoria?.Nombre == categoria);
-
-        if (!string.IsNullOrWhiteSpace(nivel))
-            query = query.Where(c => c.Nivel?.Nombre == nivel);
-
-        if (!string.IsNullOrWhiteSpace(instructor))
-            query = query.Where(c => c.Instructor?.Nombre == instructor);
-
-        if (!string.IsNullOrWhiteSpace(estatus))
-            query = query.Where(c => c.Estatus == estatus);
-
-        if (min.HasValue)
-            query = query.Where(c => c.Precio >= min.Value);
-
-        if (max.HasValue)
-            query = query.Where(c => c.Precio <= max.Value);
-
-        return Ok(query.ToList());
-    }
+        [FromQuery] decimal? max) =>
+        (await _model.BuscarAsync(q, categoria, nivel, instructor, estatus, min, max)).ToActionResult(this);
 }
