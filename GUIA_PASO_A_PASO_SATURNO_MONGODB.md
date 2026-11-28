@@ -41,9 +41,9 @@ En los materiales disponibles aparecen tres cosas relacionadas, pero no idéntic
 |---|---|
 | `Sturnotes.txt` | Notas sobre un diseño **relacional SQL**: tablas, PK/FK, un domicilio por empleado y `NO ACTION`. |
 | `Script-Saturno.txt` adjunto | Un **script Mongo anterior**: usa `ObjectId`, un campo `domicilio` singular y un modelo de cursos diferente. |
-| `scripts/mongodb/init.js` | El inicializador que usa la aplicación actual en `MongoUpdates`: IDs enteros para la mayoría de catálogos/empleados, documentos con nombres BSON concretos, domicilios embebidos en un array y certificados en otro array. |
+| `backend/scripts/mongodb/init.js` | El inicializador que usa la aplicación actual en `MongoUpdates`: IDs enteros para la mayoría de catálogos/empleados, documentos con nombres BSON concretos, domicilios embebidos en un array y certificados en otro array. |
 
-No digas que los tres son el mismo esquema. El código C# de esta rama tiene que coincidir con `scripts/mongodb/init.js`, no automáticamente con un archivo Mongo anterior o con el diseño SQL.
+No digas que los tres son el mismo esquema. El código C# de esta rama tiene que coincidir con `backend/scripts/mongodb/init.js`, no automáticamente con un archivo Mongo anterior o con el diseño SQL.
 
 ### Diferencias concretas que sí pueden preguntarte
 
@@ -104,33 +104,33 @@ No es una aplicación React separada. El navegador recibe páginas Razor `.cshtm
 
 Archivos importantes:
 
-- `src/Api/Views/Shared/_Layout.cshtml`: marco común, menú lateral y botón Salir.
-- `src/Api/Views/Admin/Empleados.cshtml`: directorio, filtros, tabla, paginación y diálogo de baja definitiva.
-- `src/Api/Views/Admin/FormularioEmpleado.cshtml`: alta/edición por pasos; aquí están los combos de Sexo y Estado.
-- `src/Api/Views/Admin/Catalogos.cshtml`: lista y formulario modal de sexo/estado.
-- `src/Api/Views/Admin/Cursos.cshtml`: formulario para crear cursos.
-- `src/Api/Views/Admin/Buscar.cshtml`: filtros y resultados de cursos.
-- `src/Api/Views/Admin/AsignarCurso.cshtml`: combo de cursos para asignar a empleado.
+- `frontend/Views/Shared/_Layout.cshtml`: marco común, menú lateral y botón Salir.
+- `frontend/Views/Admin/Empleados.cshtml`: directorio, filtros, tabla, paginación y diálogo de baja definitiva.
+- `frontend/Views/Admin/FormularioEmpleado.cshtml`: alta/edición por pasos; aquí están los combos de Sexo y Estado.
+- `frontend/Views/Admin/Catalogos.cshtml`: lista y formulario modal de sexo/estado.
+- `frontend/Views/Admin/Cursos.cshtml`: formulario para crear cursos.
+- `frontend/Views/Admin/Buscar.cshtml`: filtros y resultados de cursos.
+- `frontend/Views/Admin/AsignarCurso.cshtml`: combo de cursos para asignar a empleado.
 - `frontend/css/admin.css`: estilos que se sirven como `/css/admin.css`.
-- `src/Api/Views/Sesion/Entrar.cshtml`: pantalla de inicio de sesión.
+- `frontend/Views/Sesion/Entrar.cshtml`: pantalla de inicio de sesión.
 
 ### Backend: lo que ocurre detrás
 
-- `src/Api/Program.cs`: configura ASP.NET, MongoDB, autenticación, permisos, Swagger y rutas.
-- `src/Api/Controllers/Mvc/AdminController.cs`: acciones de las pantallas; registra/edita empleados, carga listas y procesa catálogos.
-- `src/Api/Controllers/Mvc/SesionController.cs`: inicia/cierra sesión del administrador.
-- `src/Api/Controllers/UsuariosController.cs`: endpoints JSON para empleados, registro y asignación de cursos.
-- `src/Api/Controllers/CategoriasController.cs`, `NivelesController.cs`, `InstructoresController.cs`, `CursosController.cs`: API JSON de catálogos y cursos.
-- `src/Api/Controllers/HealthController.cs`: comprueba que Mongo responde y que hay catálogos básicos.
-- `src/Api/Models/ViewModels/AdminViewModels.cs`: hojas/formas de pantalla y varias reglas de validación.
-- `src/Api/Models/Validation/DateValidationAttributes.cs`: validaciones especiales de edad y orden de fechas.
+- `backend/Api/Program.cs`: configura ASP.NET, MongoDB, autenticación, permisos, Swagger y rutas.
+- `backend/Api/Controllers/Mvc/AdminController.cs`: acciones de las pantallas; registra/edita empleados, carga listas y procesa catálogos.
+- `backend/Api/Controllers/Mvc/SesionController.cs`: inicia/cierra sesión del administrador.
+- `backend/Api/Controllers/UsuariosController.cs`: endpoints JSON para empleados, registro y asignación de cursos.
+- `backend/Api/Controllers/CategoriasController.cs`, `NivelesController.cs`, `InstructoresController.cs`, `CursosController.cs`: API JSON de catálogos y cursos.
+- `backend/Api/Controllers/HealthController.cs`: comprueba que Mongo responde y que hay catálogos básicos.
+- `backend/Api/Models/ViewModels/AdminViewModels.cs`: hojas/formas de pantalla y varias reglas de validación.
+- `backend/Api/Models/Validation/DateValidationAttributes.cs`: validaciones especiales de edad y orden de fechas.
 
 ### Datos
 
-- `src/Data/Entities/`: clases C# que representan documentos o subdocumentos.
-- `src/Data/SaturnoStore.cs`: acceso Mongo de operaciones específicas del negocio.
-- `src/Data/MongoCatalog.cs`: operaciones genéricas para consultar, buscar, insertar, reemplazar o borrar una colección.
-- `scripts/mongodb/init.js`: reglas, índices y datos iniciales compatibles con esta versión.
+- `backend/Api/Models/Data/Entities/`: clases C# que representan documentos o subdocumentos.
+- `backend/Api/Models/Data/SaturnoStore.cs`: acceso Mongo de operaciones específicas del negocio.
+- `backend/Api/Models/Data/MongoCatalog.cs`: operaciones genéricas para consultar, buscar, insertar, reemplazar o borrar una colección.
+- `backend/scripts/mongodb/init.js`: reglas, índices y datos iniciales compatibles con esta versión.
 
 ## 5. ¿Dónde está cada combo?
 
@@ -500,7 +500,7 @@ Ese cambio no agrega empleados ni cambia la clave de sexo dentro de empleados ex
 
 ### “¿Dónde se dibuja el combo de sexo?”
 
-En `src/Api/Views/Admin/FormularioEmpleado.cshtml`, en el `<select asp-for="SexoId">`. La lista llega desde `AdminController.BuildEmpleadoFormViewModelAsync`, que consulta `sexos`. La entidad se guarda en `Usuario.SexoId` como `id_sexo`.
+En `frontend/Views/Admin/FormularioEmpleado.cshtml`, en el `<select asp-for="SexoId">`. La lista llega desde `AdminController.BuildEmpleadoFormViewModelAsync`, que consulta `sexos`. La entidad se guarda en `Usuario.SexoId` como `id_sexo`.
 
 ### “¿Por qué no se ve el empleado que acabo de ingresar?”
 
@@ -575,23 +575,23 @@ db.contadores.find().sort({ _id: 1 })
 
 Estos ejemplos solo consultan información; no muestran hashes de contraseñas y no eliminan ni modifican datos. Para salir escribe `exit`.
 
-Para arrancar el proyecto, `init.js` se ejecuta una vez desde la raíz y prepara Mongo; después `dotnet run --project src\Api\Api.csproj` inicia la aplicación web. El inicializador no es necesario cada vez que solo reinicias ASP.NET, salvo que hayas cambiado las reglas/catálogos del inicializador.
+Para arrancar el proyecto, `init.js` se ejecuta una vez desde la raíz y prepara Mongo; después `dotnet run --project backend\Api\Api.csproj` inicia la aplicación web. El inicializador no es necesario cada vez que solo reinicias ASP.NET, salvo que hayas cambiado las reglas/catálogos del inicializador.
 
 ## 21. Archivos que conviene abrir durante una pregunta
 
-- [Program.cs](src/Api/Program.cs): arranque, Mongo, cookies y permisos.
-- [init.js](scripts/mongodb/init.js): esquema Mongo práctico, índices y catálogos iniciales.
-- [AdminController.cs](src/Api/Controllers/Mvc/AdminController.cs): pantallas y flujo MVC.
-- [FormularioEmpleado.cshtml](src/Api/Views/Admin/FormularioEmpleado.cshtml): combos, campos y pasos.
-- [Empleados.cshtml](src/Api/Views/Admin/Empleados.cshtml): lista, filtros y paginación.
-- [AdminViewModels.cs](src/Api/Models/ViewModels/AdminViewModels.cs): propiedades y validaciones.
-- [Usuario.cs](src/Data/Entities/Usuario.cs): documento empleado y campos BSON.
-- [DireccionUsuario.cs](src/Data/Entities/DireccionUsuario.cs): dirección embebida.
-- [CursoUsuario.cs](src/Data/Entities/CursoUsuario.cs): certificado/curso embebido.
-- [SaturnoStore.cs](src/Data/SaturnoStore.cs): operaciones Mongo del negocio y contador.
-- [MongoCatalog.cs](src/Data/MongoCatalog.cs): CRUD genérico y asignación del ID.
-- [UsuariosController.cs](src/Api/Controllers/UsuariosController.cs): versión JSON de operaciones de usuario.
-- [CategoriasController.cs](src/Api/Controllers/CategoriasController.cs), [NivelesController.cs](src/Api/Controllers/NivelesController.cs), [InstructoresController.cs](src/Api/Controllers/InstructoresController.cs): ejemplos de cómo los catálogos responden a eliminar/cambiar.
+- [Program.cs](backend/Api/Program.cs): arranque, Mongo, cookies y permisos.
+- [init.js](backend/scripts/mongodb/init.js): esquema Mongo práctico, índices y catálogos iniciales.
+- [AdminController.cs](backend/Api/Controllers/Mvc/AdminController.cs): pantallas y flujo MVC.
+- [FormularioEmpleado.cshtml](frontend/Views/Admin/FormularioEmpleado.cshtml): combos, campos y pasos.
+- [Empleados.cshtml](frontend/Views/Admin/Empleados.cshtml): lista, filtros y paginación.
+- [AdminViewModels.cs](backend/Api/Models/ViewModels/AdminViewModels.cs): propiedades y validaciones.
+- [Usuario.cs](backend/Api/Models/Data/Entities/Usuario.cs): documento empleado y campos BSON.
+- [DireccionUsuario.cs](backend/Api/Models/Data/Entities/DireccionUsuario.cs): dirección embebida.
+- [CursoUsuario.cs](backend/Api/Models/Data/Entities/CursoUsuario.cs): certificado/curso embebido.
+- [SaturnoStore.cs](backend/Api/Models/Data/SaturnoStore.cs): operaciones Mongo del negocio y contador.
+- [MongoCatalog.cs](backend/Api/Models/Data/MongoCatalog.cs): CRUD genérico y asignación del ID.
+- [UsuariosController.cs](backend/Api/Controllers/UsuariosController.cs): versión JSON de operaciones de usuario.
+- [CategoriasController.cs](backend/Api/Controllers/CategoriasController.cs), [NivelesController.cs](backend/Api/Controllers/NivelesController.cs), [InstructoresController.cs](backend/Api/Controllers/InstructoresController.cs): ejemplos de cómo los catálogos responden a eliminar/cambiar.
 
 ## 22. Una respuesta de 30 segundos para presentar
 

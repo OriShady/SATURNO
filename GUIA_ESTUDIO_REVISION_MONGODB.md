@@ -15,7 +15,7 @@ Vista o cliente HTTP
   -> MongoDB: colección y documentos
 ```
 
-La configuración de servicios, conexión, autenticación y rutas está en [Program.cs](src/Api/Program.cs). Las entidades C# definen la representación de documentos y los nombres BSON, por ejemplo [Usuario.cs](src/Data/Entities/Usuario.cs). El acceso compartido está en [SaturnoStore.cs](src/Data/SaturnoStore.cs) y [MongoCatalog.cs](src/Data/MongoCatalog.cs). El inicializador [init.js](scripts/mongodb/init.js) crea o actualiza validadores, índices y datos de catálogo.
+La configuración de servicios, conexión, autenticación y rutas está en [Program.cs](backend/Api/Program.cs). Las entidades C# definen la representación de documentos y los nombres BSON, por ejemplo [Usuario.cs](backend/Api/Models/Data/Entities/Usuario.cs). El acceso compartido está en [SaturnoStore.cs](backend/Api/Models/Data/SaturnoStore.cs) y [MongoCatalog.cs](backend/Api/Models/Data/MongoCatalog.cs). El inicializador [init.js](backend/scripts/mongodb/init.js) crea o actualiza validadores, índices y datos de catálogo.
 
 ### Cómo se acoplan el código y `init.js`
 
@@ -41,7 +41,7 @@ Los materiales disponibles describen modelos distintos. No conviene presentarlos
 | Catálogos | La nota dice que se quitaron categorías, niveles, instructores y el catálogo general de cursos. | Tiene colecciones de sexos, estados, administradores y cursos; no refleja el catálogo completo actual. | Incluye `sexos`, `estados`, `categorias`, `niveles`, `instructores` y `cursos`. |
 | Relaciones | Las FK y restricciones SQL hacen cumplir integridad relacional. | Referencias `ObjectId` entre documentos. | Se guardan IDs numéricos relacionados, pero MongoDB no los hace FK. Parte de las comprobaciones ocurre en controladores. |
 
-**Conclusión para defender:** la aplicación actual y `scripts/mongodb/init.js` sí están diseñados para trabajar juntos: usan IDs numéricos, nombres BSON y colecciones compatibles. El script Mongo adjunto anterior usa otro contrato (por ejemplo, `ObjectId`, `domicilio` singular y cursos con `id_curso` obligatorio); no es intercambiable con el inicializador actual.
+**Conclusión para defender:** la aplicación actual y `backend/scripts/mongodb/init.js` sí están diseñados para trabajar juntos: usan IDs numéricos, nombres BSON y colecciones compatibles. El script Mongo adjunto anterior usa otro contrato (por ejemplo, `ObjectId`, `domicilio` singular y cursos con `id_curso` obligatorio); no es intercambiable con el inicializador actual.
 
 **Conclusión para refutar una defensa incorrecta:** no se debe decir que `MongoUpdates` reproduce exactamente el diseño relacional de `Sturnotes.txt`. Hay diferencias observables, como múltiples domicilios permitidos, certificados embebidos y catálogos que la nota relacional elimina. Si la revisión exige obedecer ese diseño, hay una decisión de requisitos pendiente o una desviación que debe corregirse, no una equivalencia automática entre SQL y Mongo.
 
@@ -186,11 +186,11 @@ Para inspeccionar datos no imprimas contraseñas ni `password_hash`; basta con p
 
 ## 9. Archivos que conviene tener ubicados
 
-- [Program.cs](src/Api/Program.cs): configuración de MongoDB, autenticación, manejo de errores y rutas.
-- [init.js](scripts/mongodb/init.js): validadores, índices, catálogos iniciales y sincronización inicial de contadores.
-- [SaturnoStore.cs](src/Data/SaturnoStore.cs): consultas de dominio, contadores y operaciones de empleado.
-- [MongoCatalog.cs](src/Data/MongoCatalog.cs): CRUD genérico y asignación del ID en inserciones.
-- [Usuario.cs](src/Data/Entities/Usuario.cs), [DireccionUsuario.cs](src/Data/Entities/DireccionUsuario.cs) y [CursoUsuario.cs](src/Data/Entities/CursoUsuario.cs): documento y datos embebidos de empleado.
-- [AdminController.cs](src/Api/Controllers/Mvc/AdminController.cs): flujos del panel y validación de catálogos.
-- [NivelesController.cs](src/Api/Controllers/NivelesController.cs), [InstructoresController.cs](src/Api/Controllers/InstructoresController.cs) y [CategoriasController.cs](src/Api/Controllers/CategoriasController.cs): ejemplos concretos de actualización, borrado lógico y borrado físico.
-- [UsuariosController.cs](src/Api/Controllers/UsuariosController.cs): registro API, baja, credenciales y asignación de cursos.
+- [Program.cs](backend/Api/Program.cs): configuración de MongoDB, autenticación, manejo de errores y rutas.
+- [init.js](backend/scripts/mongodb/init.js): validadores, índices, catálogos iniciales y sincronización inicial de contadores.
+- [SaturnoStore.cs](backend/Api/Models/Data/SaturnoStore.cs): consultas de dominio, contadores y operaciones de empleado.
+- [MongoCatalog.cs](backend/Api/Models/Data/MongoCatalog.cs): CRUD genérico y asignación del ID en inserciones.
+- [Usuario.cs](backend/Api/Models/Data/Entities/Usuario.cs), [DireccionUsuario.cs](backend/Api/Models/Data/Entities/DireccionUsuario.cs) y [CursoUsuario.cs](backend/Api/Models/Data/Entities/CursoUsuario.cs): documento y datos embebidos de empleado.
+- [AdminController.cs](backend/Api/Controllers/Mvc/AdminController.cs): flujos del panel y validación de catálogos.
+- [NivelesController.cs](backend/Api/Controllers/NivelesController.cs), [InstructoresController.cs](backend/Api/Controllers/InstructoresController.cs) y [CategoriasController.cs](backend/Api/Controllers/CategoriasController.cs): ejemplos concretos de actualización, borrado lógico y borrado físico.
+- [UsuariosController.cs](backend/Api/Controllers/UsuariosController.cs): registro API, baja, credenciales y asignación de cursos.
